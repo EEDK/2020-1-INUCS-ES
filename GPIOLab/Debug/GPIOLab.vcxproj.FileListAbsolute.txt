@@ -1,0 +1,2 @@
+C:\Users\User\Desktop\2020년도 1학기\임베디드시스템 - professor Bak\project\GPIOLab\Debug\GPIOLab.exe
+C:\Users\User\Desktop\2020년도 1학기\임베디드시스템 - professor Bak\project\GPIOLab\Debug\GPIOLab.pdb
