@@ -270,7 +270,7 @@ void FuncApp(int i) {
 }
 
 
-/*void SwitchEachNumber(int i) {
+void SwitchEachNumber(int i) {
     switch (i)
     {
     case 0 :
@@ -297,9 +297,9 @@ void FuncApp(int i) {
     default:
         break;
     }
-}*/
+}
 
-/*void ShutDown() {
+void ShutDown() {
     digitalWrite(LED0, LOW);
     digitalWrite(LED1, LOW);
     digitalWrite(LED2, LOW);
@@ -307,7 +307,7 @@ void FuncApp(int i) {
     digitalWrite(LED4, LOW);
     digitalWrite(LED5, LOW);
     digitalWrite(LED6, LOW);
-}*/
+}
 
 int main(int argc, char* argv[])      
 {
@@ -371,7 +371,26 @@ int main(int argc, char* argv[])
                     int number = (int)strtol(argv[2], NULL, 0);
 
                     if (number > 0x7f) {
-                        printf("Input must be less than 0x7f");
+                        printf("Input must be less than 0x7f\n");
+                    }
+                    else {
+                        wiringPiSetup();
+                        pinMode(LED0, OUTPUT);
+                        pinMode(LED1, OUTPUT);
+                        pinMode(LED2, OUTPUT);
+                        pinMode(LED3, OUTPUT);
+                        pinMode(LED4, OUTPUT);
+                        pinMode(LED5, OUTPUT);
+                        pinMode(LED6, OUTPUT);
+                        int i;
+                        for (i = 0; i < 8; i++) {
+                            if (number % 2 != 0) {
+                                SwitchEachNumber(i);
+                            }
+                            number >>= 1;
+                        }
+                        delay(5000);
+                        ShutDown();
                     }
                 }
                 else {
