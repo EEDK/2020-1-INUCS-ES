@@ -1,16 +1,18 @@
 #include <stdio.h>
-#include <stdlib.h>    // atoi 함수가 선언된 헤더 파일
-#include <string.h>    // strchr 함수가 선언된 헤더 파일
+#include <stdlib.h>    
+#include <time.h>  
+#include <string.h>    
+#include <wiringPi.h>
 
-#define LED1    21  // #101
-#define LED2    22  // #10
-#define LED3    23  // #108
-#define LED4    24  // #97 
-#define LED5    10  // CE0
-#define LED6    11  // #118
-#define LED7    26  // #99
+#define LED0    21  // #101
+#define LED1    22  // #10
+#define LED2    23  // #108
+#define LED3    24  // #97 
+#define LED4    10  // CE0
+#define LED5    11  // #118
+#define LED6    26  // #99
 
-// SubStr 구현함수 ( err check용 ) 
+
 char* SubStr(char* pnInput, int nStart, int nLen) {
     int nLoop;
     int nLength;
@@ -37,41 +39,347 @@ char* SubStr(char* pnInput, int nStart, int nLen) {
     return pszOutPut;
 }
 
+void FuncApp(int i) {
+    switch (i)
+    {
+    case 0 :
+        digitalWrite(LED0, HIGH);
+        digitalWrite(LED1, HIGH);
+        digitalWrite(LED2, HIGH);
+        digitalWrite(LED3, HIGH);
+        digitalWrite(LED4, HIGH);
+        digitalWrite(LED5, HIGH);
+        delay(500);
+        digitalWrite(LED0, LOW);
+        digitalWrite(LED1, LOW);
+        digitalWrite(LED2, LOW);
+        digitalWrite(LED3, LOW);
+        digitalWrite(LED4, LOW);
+        digitalWrite(LED5, LOW);
+        delay(500);
 
-int main(int argc, char* argv[])      // 옵션의 개수와 옵션 문자열을 배열로 받음
+        break;
+    case 1 :
+        digitalWrite(LED1, HIGH);
+        digitalWrite(LED2, HIGH);
+        delay(500);
+        digitalWrite(LED1, LOW);
+        digitalWrite(LED2, LOW);
+        delay(500);
+
+        break;
+    case 2 :
+        digitalWrite(LED0, HIGH);
+        digitalWrite(LED1, HIGH);
+        digitalWrite(LED6, HIGH);
+        digitalWrite(LED4, HIGH);
+        digitalWrite(LED3, HIGH);
+        delay(500);
+        digitalWrite(LED0, LOW);
+        digitalWrite(LED1, LOW);
+        digitalWrite(LED6, LOW);
+        digitalWrite(LED4, LOW);
+        digitalWrite(LED3, LOW);
+        delay(500);
+        break;
+    case 3 :
+        digitalWrite(LED0, HIGH);
+        digitalWrite(LED1, HIGH);
+        digitalWrite(LED6, HIGH);
+        digitalWrite(LED2, HIGH);
+        digitalWrite(LED3, HIGH);
+        delay(500);
+        digitalWrite(LED0, LOW);
+        digitalWrite(LED1, LOW);
+        digitalWrite(LED6, LOW);
+        digitalWrite(LED2, LOW);
+        digitalWrite(LED3, LOW);
+        delay(500);
+
+    case 4 :
+        digitalWrite(LED5, HIGH);
+        digitalWrite(LED6, HIGH);
+        digitalWrite(LED1, HIGH);
+        digitalWrite(LED2, HIGH);
+        delay(500);
+        digitalWrite(LED5, LOW);
+        digitalWrite(LED6, LOW);
+        digitalWrite(LED1, LOW);
+        digitalWrite(LED2, LOW);
+        delay(500);
+        break;
+    case 5 :
+        digitalWrite(LED0, HIGH);
+        digitalWrite(LED5, HIGH);
+        digitalWrite(LED6, HIGH);
+        digitalWrite(LED2, HIGH);
+        digitalWrite(LED3, HIGH);
+        delay(500);
+        digitalWrite(LED0, LOW);
+        digitalWrite(LED5, LOW);
+        digitalWrite(LED6, LOW);
+        digitalWrite(LED2, LOW);
+        digitalWrite(LED3, LOW);
+        delay(500);
+        break;
+    case 6 :
+        digitalWrite(LED0, HIGH);
+        digitalWrite(LED2, HIGH);
+        digitalWrite(LED3, HIGH);
+        digitalWrite(LED4, HIGH);
+        digitalWrite(LED5, HIGH);
+        digitalWrite(LED6, HIGH);
+        delay(500);
+        digitalWrite(LED0, LOW);
+        digitalWrite(LED2, LOW);
+        digitalWrite(LED3, LOW);
+        digitalWrite(LED4, LOW);
+        digitalWrite(LED5, LOW);
+        digitalWrite(LED6, LOW);
+        delay(500);
+        break;
+    case 7 :
+        digitalWrite(LED0, HIGH);
+        digitalWrite(LED1, HIGH);
+        digitalWrite(LED2, HIGH);
+        delay(500);
+        digitalWrite(LED0, LOW);
+        digitalWrite(LED1, LOW);
+        digitalWrite(LED2, LOW);
+        delay(500);
+        break;
+    case 8 : 
+        digitalWrite(LED0, HIGH);
+        digitalWrite(LED1, HIGH);
+        digitalWrite(LED2, HIGH);
+        digitalWrite(LED3, HIGH);
+        digitalWrite(LED4, HIGH);
+        digitalWrite(LED5, HIGH);
+        digitalWrite(LED6, HIGH);
+        delay(500);
+        digitalWrite(LED0, LOW);
+        digitalWrite(LED1, LOW);
+        digitalWrite(LED2, LOW);
+        digitalWrite(LED3, LOW);
+        digitalWrite(LED4, LOW);
+        digitalWrite(LED5, LOW);
+        digitalWrite(LED6, LOW);
+        delay(500);
+        break;
+    case 9 :
+        digitalWrite(LED0, HIGH);
+        digitalWrite(LED1, HIGH);
+        digitalWrite(LED2, HIGH);
+        digitalWrite(LED5, HIGH);
+        digitalWrite(LED6, HIGH);
+        delay(500);
+        digitalWrite(LED0, LOW);
+        digitalWrite(LED1, LOW);
+        digitalWrite(LED2, LOW);
+        digitalWrite(LED5, LOW);
+        digitalWrite(LED6, LOW);
+        delay(500);
+        break;
+    case 10 :
+        digitalWrite(LED0, HIGH);
+        digitalWrite(LED1, HIGH);
+        digitalWrite(LED2, HIGH);
+        digitalWrite(LED3, HIGH);
+        digitalWrite(LED4, HIGH);
+        digitalWrite(LED6, HIGH);
+        delay(500);
+        digitalWrite(LED0, LOW);
+        digitalWrite(LED1, LOW);
+        digitalWrite(LED2, LOW);
+        digitalWrite(LED3, LOW);
+        digitalWrite(LED4, LOW);
+        digitalWrite(LED6, LOW);
+        delay(500);
+        break;
+    case 11 :
+        digitalWrite(LED2, HIGH);
+        digitalWrite(LED3, HIGH);
+        digitalWrite(LED4, HIGH);
+        digitalWrite(LED5, HIGH);
+        digitalWrite(LED6, HIGH);
+        delay(500);
+        digitalWrite(LED2, LOW);
+        digitalWrite(LED3, LOW);
+        digitalWrite(LED4, LOW);
+        digitalWrite(LED5, LOW);
+        digitalWrite(LED6, LOW);
+        delay(500);
+        break;
+    case 12 :
+        digitalWrite(LED0, HIGH);
+        digitalWrite(LED3, HIGH);
+        digitalWrite(LED4, HIGH);
+        digitalWrite(LED5, HIGH);
+        delay(500);
+        digitalWrite(LED0, LOW);
+        digitalWrite(LED3, LOW);
+        digitalWrite(LED4, LOW);
+        digitalWrite(LED5, LOW);
+        delay(500);
+        break;
+    case 13 :
+        digitalWrite(LED1, HIGH);
+        digitalWrite(LED2, HIGH);
+        digitalWrite(LED3, HIGH);
+        digitalWrite(LED4, HIGH);
+        digitalWrite(LED6, HIGH);
+        delay(500);
+        digitalWrite(LED1, LOW);
+        digitalWrite(LED2, LOW);
+        digitalWrite(LED3, LOW);
+        digitalWrite(LED4, LOW);
+        digitalWrite(LED6, LOW);
+        delay(500);
+        break;
+    case 14 :
+        digitalWrite(LED0, HIGH);
+        digitalWrite(LED1, HIGH);
+        digitalWrite(LED3, HIGH);
+        digitalWrite(LED4, HIGH);
+        digitalWrite(LED5, HIGH);
+        digitalWrite(LED6, HIGH);
+        delay(500);
+        digitalWrite(LED0, LOW);
+        digitalWrite(LED1, LOW);
+        digitalWrite(LED3, LOW);
+        digitalWrite(LED4, LOW);
+        digitalWrite(LED5, LOW);
+        digitalWrite(LED6, LOW);
+        delay(500);
+        break;
+    case 15 :
+        digitalWrite(LED0, HIGH);
+        digitalWrite(LED4, HIGH);
+        digitalWrite(LED5, HIGH);
+        digitalWrite(LED6, HIGH);
+        delay(500);
+        digitalWrite(LED0, LOW);
+        digitalWrite(LED4, LOW);
+        digitalWrite(LED5, LOW);
+        digitalWrite(LED6, LOW);
+        delay(500);
+        break;
+    default:
+        break;
+    }
+}
+
+
+/*void SwitchEachNumber(int i) {
+    switch (i)
+    {
+    case 0 :
+        digitalWrite(LED0, HIGH);
+        break;
+    case 1 :
+        digitalWrite(LED1, HIGH);
+        break;
+    case 2 :
+        digitalWrite(LED2, HIGH);
+        break;
+    case 3 :
+        digitalWrite(LED3, HIGH);
+        break;
+    case 4 : 
+        digitalWrite(LED4, HIGH);
+        break;
+    case 5 :
+        digitalWrite(LED5, HIGH);
+        break;
+    case 6 :
+        digitalWrite(LED6, HIGH);
+        break;
+    default:
+        break;
+    }
+}*/
+
+/*void ShutDown() {
+    digitalWrite(LED0, LOW);
+    digitalWrite(LED1, LOW);
+    digitalWrite(LED2, LOW);
+    digitalWrite(LED3, LOW);
+    digitalWrite(LED4, LOW);
+    digitalWrite(LED5, LOW);
+    digitalWrite(LED6, LOW);
+}*/
+
+int main(int argc, char* argv[])      
 {
-    // 전달된 인자가 없을시 실시
     if (argc < 2) {
-        printf("1개 이상의 인자를 넣어주세요.");
+        printf("choice option 1 or 2.\n");
     }
 
     else {
         if (atoi(argv[1]) < 1 || atoi(argv[1]) > 2) {
-            printf("시작 옵션으로는 1 혹은 2만 가능합니다.");
+            printf("choice option 1 or 2.\n");
         }
-        // 전달받은 인자가 1일시 실시 ./App 1
         else if (atoi(argv[1]) == 1) {
             if (argc == 2) {
-                printf("App 1 Blink!");
+                printf("App 1 Blink!\n");
+                int num[16];    
+                int j;
+                int i;
+
+                for (j = 0; j < 16; j++) {     
+                    num[j] = j;
+                }
+
+                srand(time(NULL));    
+
+                for (i = 0; i < 30; i++) {   
+
+                    int randNum1 = rand() % 16;    
+                    int randNum2 = rand() % 16;
+
+                    int temp;
+                    temp = num[randNum1];
+                    num[randNum1] = num[randNum2];
+                    num[randNum2] = temp;
+                }
+
+                wiringPiSetup();                      
+                pinMode(LED0, OUTPUT);
+                pinMode(LED1, OUTPUT);
+                pinMode(LED2, OUTPUT);
+                pinMode(LED3, OUTPUT);
+                pinMode(LED4, OUTPUT);
+                pinMode(LED5, OUTPUT);
+                pinMode(LED6, OUTPUT);
+                
+
+                for (i = 0; i <= 15; i++) {
+                    FuncApp(i);
+                }
+                for (i = 0; i <= 15; i++) {
+                    FuncApp(num[i]);
+                }
             }
             else {
-                printf("인자수에 오류가 있습니다.");
+                printf("arguemnt must Be 1 or 2.\n");
             }
         }
-        // 전달받은 인자가 2일시 실시 ./App 0xXX
         else if (atoi(argv[1]) == 2) {
             if (argc == 3){ 
                 printf("App 2 Blink!\n");
                 if (strcmp(SubStr(argv[2], 0, 2), "0x") == 0) {
                     int number = (int)strtol(argv[2], NULL, 0);
-                    printf("%d\n", number);
+
+                    if (number > 0x7f) {
+                        printf("Input must be less than 0x7f");
+                    }
                 }
                 else {
-                    printf("입력받은 수에 오류가 있습니다 16진법 표기로 0x를 붙혀주세요");
+                    printf("The first letter of the input value must start with 0x\n");
                 }
             }
             else {
-                printf("인자수에 오류가 있습니다.");
+                printf("argment must be 2.\n");
             }
         }
     }
