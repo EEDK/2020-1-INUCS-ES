@@ -398,7 +398,7 @@ int main(int argc, char* argv[])
                             s1[i] != 'E' &&
                             s1[i] != 'f' &&
                             s1[i] != 'F' ) {
-                            checkerSign += 1;
+                            checkerSign = 1;
                         }
                     }
 
@@ -408,7 +408,7 @@ int main(int argc, char* argv[])
                         printf("Input must be less than 0x7f\n");
                     }
                     else if (checkerSign != 0) {
-                        printf("input value must be 0x'1~f'");
+                        printf("input value must be 0x'0~f'");
                     }
                     else {
                         printf("App 2 Blink!\n");
