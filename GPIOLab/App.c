@@ -40,6 +40,7 @@ char* SubStr(char* pnInput, int nStart, int nLen) {
 }
 
 
+
 void FuncApp(int i) {
     switch (i)
     {
@@ -300,6 +301,7 @@ void SwitchEachNumber(int i) {
     }
 }
 
+
 void ShutDown() {
     digitalWrite(LED0, LOW);
     digitalWrite(LED1, LOW);
@@ -309,6 +311,7 @@ void ShutDown() {
     digitalWrite(LED5, LOW);
     digitalWrite(LED6, LOW);
 }
+
 
 int main(int argc, char* argv[])      
 {
@@ -357,9 +360,11 @@ int main(int argc, char* argv[])
                 for (i = 0; i <= 15; i++) {
                     FuncApp(i);
                 }
+                printf("\n");
                 for (i = 0; i <= 15; i++) {
                     FuncApp(num[i]);
                 }
+                printf("\n");
             }
             else {
                 printf("arguemnt must Be 1 or 2.\n");
@@ -410,7 +415,7 @@ int main(int argc, char* argv[])
                     else if (checkerSign != 0) {
                         printf("input value must be 0x'0~f'");
                     }
-                    else {
+                    else if (checkerSign == 0){
                         printf("App 2 Blink!\n");
 
                         wiringPiSetup();
