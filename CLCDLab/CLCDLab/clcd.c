@@ -10,6 +10,21 @@
 #define LCD_RS 7
 #define LCD_EN 0
 
+#define BT1 12
+#define BT2 13
+#define BT3 10
+#define BT4 14
+#define BT5 11
+#define BT6 21
+#define BT7 26
+#define BT8 22
+#define BT9 23
+#define BT0 24
+#define EQL 27
+
+#define PLUS 5
+#define MINUS 6
+
 void write4bits(unsigned char command)
 {
     digitalWrite(LCD_D4, (command & 1));
@@ -46,12 +61,23 @@ void putChar(char c) {
 }
 
 void initialize_textlcd() {	//CLCD 초기화
-    pinMode(LCD_RS, OUTPUT); pinMode(LCD_EN, OUTPUT);
-    pinMode(LCD_D4, OUTPUT); pinMode(LCD_D5, OUTPUT);
-    pinMode(LCD_D6, OUTPUT); pinMode(LCD_D7, OUTPUT);
-    digitalWrite(LCD_RS, 0); digitalWrite(LCD_EN, 0);
-    digitalWrite(LCD_D4, 0); digitalWrite(LCD_D5, 0);
-    digitalWrite(LCD_D6, 0);  digitalWrite(LCD_D7, 0);
+    pinMode(LCD_RS, OUTPUT); 
+    pinMode(LCD_EN, OUTPUT);
+    pinMode(LCD_D4, OUTPUT); 
+    pinMode(LCD_D5, OUTPUT);
+    pinMode(LCD_D6, OUTPUT); 
+    pinMode(LCD_D7, OUTPUT);
+
+    pinMode(EQL, INPUT);
+
+    pullUpDnControl(EQL, PUD_DOWN);
+   
+    digitalWrite(LCD_RS, 0); 
+    digitalWrite(LCD_EN, 0);
+    digitalWrite(LCD_D4, 0); 
+    digitalWrite(LCD_D5, 0);
+    digitalWrite(LCD_D6, 0); 
+    digitalWrite(LCD_D7, 0);
     delay(35);
 
     putCmd4(0x28);  // 4비트 2줄
@@ -84,6 +110,9 @@ int main(int argc, char** argv) {
     wiringPiSetup();
 
     initialize_textlcd();
+    
+    printf("EQL IS %d\n", digitalRead(EQL));
+
     for (i = 0; i < len1; i++) putChar(buf1[i]);
     putCmd4(0xC0);
     for (i = 0; i < len2; i++) putChar(buf2[i]);
