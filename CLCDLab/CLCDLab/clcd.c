@@ -114,31 +114,65 @@ void initialize_textlcd() {	//CLCD ÃÊ±âÈ­
     delay(2);
 }
 
+char calc[100] = "";
+
+
+void append(char* dst, char c) {
+    char* p = dst;
+    while (*p != '\0') p++;
+    *p = c;
+    *(p + 1) = '\0';
+}
+
+void WhichBtn() {
+    if (digitalRead(BT0) == 1) {
+        append(calc, '0');
+    }
+    else if (digitalRead(BT1) == 1) {
+        append(calc, '1');
+    }
+    else if (digitalRead(BT2) == 1) {
+        append(calc, '2');
+    }
+    else if (digitalRead(BT3) == 1) {
+        append(calc, '3');
+    }
+    else if (digitalRead(BT4) == 1) {
+        append(calc, '4');
+    }
+    else if (digitalRead(BT5) == 1) {
+        append(calc, '5');
+    }
+    else if (digitalRead(BT6) == 1) {
+        append(calc, '6');
+    }
+    else if (digitalRead(BT7) == 1) {
+        append(calc, '7');
+    }
+    else if (digitalRead(BT8) == 1) {
+        append(calc, '8');
+    }
+    else if (digitalRead(BT9) == 1) {
+        append(calc, '9');
+    }
+    else if (!digitalRead(PLUS) == 1) {
+        append(calc, '+');
+    }
+    else if (!digitalRead(MINUS) == 1) {
+        append(calc, '-');
+    }
+}
+
 
 int main(int argc, char** argv) {
-    char buf1[100] = "201601563";
-    char buf2[100] = "Embedded System";
-    int i; 
-    int len1 = strlen(buf1); 
-    int len2 = strlen(buf2);
 
-    if (argc == 2) {
-        len1 = strlen(argv[1]);
-        len2 = 0;
-        strcpy(buf1, argv[1]);
-    }
-    else if (argc >= 3) {
-        len1 = strlen(argv[1]);
-        len2 = strlen(argv[2]);
-        strcpy(buf1, argv[1]);
-        strcpy(buf2, argv[2]);
-    }
+    int i; 
 
     wiringPiSetup();
 
     initialize_textlcd();
     
-    printf("BT7 IS %d\n", digitalRead(BT7));
+    /*printf("BT7 IS %d\n", digitalRead(BT7));
     printf("BT8 IS %d\n", digitalRead(BT8));
     printf("BT9 IS %d\n", digitalRead(BT9));
     printf("BT4 IS %d\n", digitalRead(BT4));
@@ -151,9 +185,31 @@ int main(int argc, char** argv) {
     printf("EQL IS %d\n", digitalRead(EQL));
 
     printf("PLUS IS %d\n", digitalRead(PLUS));
-    printf("MINUS IS %d\n", digitalRead(MINUS));
+    printf("MINUS IS %d\n", digitalRead(MINUS));*/
+    for (;;) {
+        if (digitalRead(BT0) ||
+            digitalRead(BT1) ||
+            digitalRead(BT2) ||
+            digitalRead(BT3) ||
+            digitalRead(BT4) ||
+            digitalRead(BT5) ||
+            digitalRead(BT6) ||
+            digitalRead(BT7) ||
+            digitalRead(BT8) ||
+            digitalRead(BT9) ||
+            !digitalRead(PLUS) ||
+            !digitalRead(MINUS)) {
+            WhichBtn();
 
-    for (i = 0; i < len1; i++) putChar(buf1[i]);
-    putCmd4(0xC0);
-    for (i = 0; i < len2; i++) putChar(buf2[i]);
+            int len1 = strlen(calc);
+
+            delay(50);
+
+            for (i = 0; i < len1; i++) putChar(calc[i]);            
+        }
+        if (digitalRead(EQL)) {
+            break;
+        }
+    }
+    printf("%s\n", calc);
 }
