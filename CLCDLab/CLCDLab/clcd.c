@@ -10,17 +10,18 @@
 #define LCD_RS 7
 #define LCD_EN 0
 
-#define BT1 12
-#define BT2 13
-#define BT3 10
+#define BT7 12
+#define BT8 13
+#define BT9 10 
 #define BT4 14
 #define BT5 11
-#define BT6 21
-#define BT7 26
-#define BT8 22
-#define BT9 23
-#define BT0 24
-#define EQL 27
+#define BT6 26
+#define BT1 21
+#define BT2 22
+#define BT3 27
+#define BT0 23
+
+#define EQL 24
 
 #define PLUS 5
 #define MINUS 6
@@ -68,10 +69,34 @@ void initialize_textlcd() {	//CLCD 초기화
     pinMode(LCD_D6, OUTPUT); 
     pinMode(LCD_D7, OUTPUT);
 
+    pinMode(BT7, INPUT);
+    pinMode(BT8, INPUT);
+    pinMode(BT9, INPUT);
+    pinMode(BT4, INPUT);
+    pinMode(BT5, INPUT);
+    pinMode(BT6, INPUT);
+    pinMode(BT1, INPUT);
+    pinMode(BT2, INPUT);
+    pinMode(BT3, INPUT);
+    pinMode(BT0, INPUT);
     pinMode(EQL, INPUT);
+    pinMode(PLUS, INPUT);
+    pinMode(MINUS, INPUT);
 
+    pullUpDnControl(BT7, PUD_DOWN);
+    pullUpDnControl(BT8, PUD_DOWN);
+    pullUpDnControl(BT9, PUD_DOWN);
+    pullUpDnControl(BT4, PUD_DOWN);
+    pullUpDnControl(BT5, PUD_DOWN);
+    pullUpDnControl(BT6, PUD_DOWN);
+    pullUpDnControl(BT1, PUD_DOWN);
+    pullUpDnControl(BT2, PUD_DOWN);
+    pullUpDnControl(BT3, PUD_DOWN);
+    pullUpDnControl(BT0, PUD_DOWN);
     pullUpDnControl(EQL, PUD_DOWN);
-   
+    pullUpDnControl(PLUS, PUD_UP);
+    pullUpDnControl(MINUS, PUD_UP);
+
     digitalWrite(LCD_RS, 0); 
     digitalWrite(LCD_EN, 0);
     digitalWrite(LCD_D4, 0); 
@@ -91,9 +116,11 @@ void initialize_textlcd() {	//CLCD 초기화
 
 
 int main(int argc, char** argv) {
-    char buf1[100] = "Welcome to";
-    char buf2[100] = "Embedded World";
-    int i; int len1 = strlen(buf1); int len2 = strlen(buf2);
+    char buf1[100] = "201601563";
+    char buf2[100] = "Embedded System";
+    int i; 
+    int len1 = strlen(buf1); 
+    int len2 = strlen(buf2);
 
     if (argc == 2) {
         len1 = strlen(argv[1]);
@@ -111,7 +138,20 @@ int main(int argc, char** argv) {
 
     initialize_textlcd();
     
+    printf("BT7 IS %d\n", digitalRead(BT7));
+    printf("BT8 IS %d\n", digitalRead(BT8));
+    printf("BT9 IS %d\n", digitalRead(BT9));
+    printf("BT4 IS %d\n", digitalRead(BT4));
+    printf("BT5 IS %d\n", digitalRead(BT5));
+    printf("BT6 IS %d\n", digitalRead(BT6));
+    printf("BT1 IS %d\n", digitalRead(BT1));
+    printf("BT2 IS %d\n", digitalRead(BT2));
+    printf("BT3 IS %d\n", digitalRead(BT3));
+    printf("BT0 IS %d\n", digitalRead(BT0));
     printf("EQL IS %d\n", digitalRead(EQL));
+
+    printf("PLUS IS %d\n", digitalRead(PLUS));
+    printf("MINUS IS %d\n", digitalRead(MINUS));
 
     for (i = 0; i < len1; i++) putChar(buf1[i]);
     putCmd4(0xC0);
