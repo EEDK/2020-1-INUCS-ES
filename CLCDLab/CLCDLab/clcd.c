@@ -116,7 +116,6 @@ void initialize_textlcd() {	//CLCD √ ±‚»≠
 
 char calc[100] = "";
 
-
 void append(char* dst, char c) {
     char* p = dst;
     while (*p != '\0') p++;
@@ -166,12 +165,12 @@ void WhichBtn() {
 
 int main(int argc, char** argv) {
 
-    int i; 
+    int i , len , state; 
 
     wiringPiSetup();
 
     initialize_textlcd();
-    
+    state = 0;
     /*printf("BT7 IS %d\n", digitalRead(BT7));
     printf("BT8 IS %d\n", digitalRead(BT8));
     printf("BT9 IS %d\n", digitalRead(BT9));
@@ -199,17 +198,38 @@ int main(int argc, char** argv) {
             digitalRead(BT9) ||
             !digitalRead(PLUS) ||
             !digitalRead(MINUS)) {
-            WhichBtn();
+            if (state == 0) {
+                WhichBtn();
+                delay(10);
+                state = 1;
 
-            int len1 = strlen(calc);
-
-            delay(50);
-
-            for (i = 0; i < len1; i++) putChar(calc[i]);            
+                len = strlen(calc);
+                printf("%c\n", calc[len - 1]);
+                //for (i = 0; i < len; i++) putChar(calc[i]);
+                putChar(calc[len - 1]);
+            }
+        }
+        else if (digitalRead(BT0) == 0 &&
+            digitalRead(BT1) == 0 &&
+            digitalRead(BT2) == 0 &&
+            digitalRead(BT3) == 0 &&
+            digitalRead(BT4) == 0 &&
+            digitalRead(BT5) == 0 &&
+            digitalRead(BT6) == 0 &&
+            digitalRead(BT7) == 0 &&
+            digitalRead(BT8) == 0 &&
+            digitalRead(BT9) == 0 &&
+            !digitalRead(PLUS) == 0 &&
+            !digitalRead(MINUS) == 0) {
+            if (state == 1) {
+                delay(10);
+                state = 0;
+            }
         }
         if (digitalRead(EQL)) {
             break;
         }
+
     }
     printf("%s\n", calc);
 }
