@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <wiringPi.h>
 
@@ -116,12 +115,59 @@ void initialize_textlcd() {	//CLCD 초기화
 
 char calc[100] = "";
 
+
 void append(char* dst, char c) {
     char* p = dst;
     while (*p != '\0') p++;
     *p = c;
     *(p + 1) = '\0';
 }
+
+int atoi(char* cdata){
+    int sign = 1, data = 0;
+
+    if (*cdata == '\n')
+        return 0;
+
+    if (*cdata == '-')
+        sign = -1;
+
+    while (*cdata)
+    {
+        if (*cdata >= '0' && *cdata <= '9')
+        {
+            data = data * 10 + *cdata - '0';
+        }
+        cdata++;
+    }
+
+    return data * sign;
+}
+
+
+void itoa(int num, char* str) {
+    int i = 0;
+    int radix = 10;  // 진수
+    int deg = 1;
+    int cnt = 0;
+
+    while (1) {    // 자리수의 수를 뽑는다
+        if ((num / deg) > 0)
+            cnt++;
+        else
+            break;
+        deg *= radix;
+    }
+    deg /= radix;    // deg가 기존 자리수보다 한자리 높게 카운트 되어서 한번 나누어줌 
+    // EX) 1241 ->    cnt = 4; deg = 1000;
+    for (i = 0; i < cnt; i++) {    // 자리수만큼 순회
+        *(str + i) = num / deg + '0';    // 가장 큰 자리수의 수부터 뽑음
+        num -= ((num / deg) * deg);        // 뽑은 자리수의 수를 없엠
+        deg /= radix;    // 자리수 줄임
+    }
+    *(str + i) = '\0';  // 문자열끝널..
+}
+
 
 void WhichBtn() {
     if (digitalRead(BT0) == 1) {
@@ -162,6 +208,90 @@ void WhichBtn() {
     }
 }
 
+void printCLCD(char str[]) {
+    initialize_textlcd();
+
+    int i, len;
+    len = strlen(str);
+
+    if (len >= 32) {
+        printCLCD("OVERFLOW");
+    }
+
+    else {
+        for (i = 0; i < len; i++) {
+            if (i == 16) {
+                putCmd4(0xC0);
+            }
+            putChar(str[i]);
+        }
+    }
+}
+
+void calcCulator(char* dst) {
+    int sum, i, len, param1, flag;
+
+    char* c = dst;
+
+    char s1[50] = "";
+    char sumStr[50];
+
+    //char c[50] = "1+23-5+2+6-5+3-1+105";    //129
+    //char b[50] = "6+89+4-56-48";            //-5
+    //char c[50] = "-2+10+34-12+30";          //60
+
+    len = strlen(c);
+
+    sum = 0;
+    flag = 0;       // 처음 항인가?
+
+    for (i = 0; i < len; i++) {
+        if (i == 0 && c[i] == '-') {
+            append(s1, c[i]);
+        }
+
+        else if (i != 0 && (c[i] == '+' || c[i] == '-')) {
+            if (flag == 0) {
+                sum = atoi(s1);
+                flag = 1;
+            }
+            else if (flag == 1) {
+                sum += atoi(s1);
+            }
+
+            s1[0] = '\0';
+            if (c[i] == '-') {
+                append(s1, c[i]);
+            }
+        }
+
+        else if (i == len - 1) {
+            append(s1, c[i]);
+            sum += atoi(s1);
+        }
+
+        else {
+            append(s1, c[i]);
+        }
+    }
+
+
+    while (*c != '\0') c++;
+
+    *c = '=';
+    c += 1;
+
+    itoa(sum, sumStr);
+    len = strlen(sumStr);
+
+    for (i = 0; i < len; i++) {
+        *c = sumStr[i];
+        c += 1;
+    }
+    *(c + 1) = '\0';
+
+    printf("%s\n", c);
+}
 
 int main(int argc, char** argv) {
 
@@ -171,20 +301,7 @@ int main(int argc, char** argv) {
 
     initialize_textlcd();
     state = 0;
-    /*printf("BT7 IS %d\n", digitalRead(BT7));
-    printf("BT8 IS %d\n", digitalRead(BT8));
-    printf("BT9 IS %d\n", digitalRead(BT9));
-    printf("BT4 IS %d\n", digitalRead(BT4));
-    printf("BT5 IS %d\n", digitalRead(BT5));
-    printf("BT6 IS %d\n", digitalRead(BT6));
-    printf("BT1 IS %d\n", digitalRead(BT1));
-    printf("BT2 IS %d\n", digitalRead(BT2));
-    printf("BT3 IS %d\n", digitalRead(BT3));
-    printf("BT0 IS %d\n", digitalRead(BT0));
-    printf("EQL IS %d\n", digitalRead(EQL));
 
-    printf("PLUS IS %d\n", digitalRead(PLUS));
-    printf("MINUS IS %d\n", digitalRead(MINUS));*/
     for (;;) {
         if (digitalRead(BT0) ||
             digitalRead(BT1) ||
@@ -199,14 +316,20 @@ int main(int argc, char** argv) {
             !digitalRead(PLUS) ||
             !digitalRead(MINUS)) {
             if (state == 0) {
+                len = strlen(calc);
+                if (len == 16) {
+                    putCmd4(0xC0);
+                }
+                else if (len >= 32) {
+                    printCLCD("OVERFLOW");          //OVERFLOW 에러처리
+                    delay(1000);
+                    break;
+                }
                 WhichBtn();
                 delay(10);
                 state = 1;
 
-                len = strlen(calc);
-                printf("%c\n", calc[len - 1]);
-                //for (i = 0; i < len; i++) putChar(calc[i]);
-                putChar(calc[len - 1]);
+                putChar(calc[len]);
             }
         }
         else if (digitalRead(BT0) == 0 &&
@@ -229,7 +352,8 @@ int main(int argc, char** argv) {
         if (digitalRead(EQL)) {
             break;
         }
-
     }
-    printf("%s\n", calc);
+    calcCulator(calc);
+
+    printCLCD(calc);
 }
