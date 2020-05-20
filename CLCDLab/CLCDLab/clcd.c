@@ -61,12 +61,22 @@ void putChar(char c) {
 }
 
 void initialize_textlcd() {	//CLCD 초기화
-    pinMode(LCD_RS, OUTPUT); 
+    pinMode(LCD_RS, OUTPUT);
     pinMode(LCD_EN, OUTPUT);
-    pinMode(LCD_D4, OUTPUT); 
+    pinMode(LCD_D4, OUTPUT);
     pinMode(LCD_D5, OUTPUT);
-    pinMode(LCD_D6, OUTPUT); 
+    pinMode(LCD_D6, OUTPUT);
     pinMode(LCD_D7, OUTPUT);
+
+
+    digitalWrite(LCD_RS, 0);
+    digitalWrite(LCD_EN, 0);
+    digitalWrite(LCD_D4, 0);
+    digitalWrite(LCD_D5, 0);
+    digitalWrite(LCD_D6, 0);
+    digitalWrite(LCD_D7, 0);
+    delay(35);
+
 
     pinMode(BT7, INPUT);
     pinMode(BT8, INPUT);
@@ -96,14 +106,6 @@ void initialize_textlcd() {	//CLCD 초기화
     pullUpDnControl(PLUS, PUD_UP);
     pullUpDnControl(MINUS, PUD_UP);
 
-    digitalWrite(LCD_RS, 0); 
-    digitalWrite(LCD_EN, 0);
-    digitalWrite(LCD_D4, 0); 
-    digitalWrite(LCD_D5, 0);
-    digitalWrite(LCD_D6, 0); 
-    digitalWrite(LCD_D7, 0);
-    delay(35);
-
     putCmd4(0x28);  // 4비트 2줄
     putCmd4(0x28); putCmd4(0x28);
     putCmd4(0x0e); // 디스플레이온 커서 온 
@@ -123,7 +125,7 @@ void append(char* dst, char c) {
     *(p + 1) = '\0';
 }
 
-int atoi(char* cdata){
+int atoi(char* cdata) {
     int sign = 1, data = 0;
 
     if (*cdata == '\n')
@@ -151,6 +153,12 @@ void itoa(int num, char* str) {
     int deg = 1;
     int cnt = 0;
 
+    if (num < 0) {
+        *str = '-';
+        str++;
+        num *= -1;
+    }
+
     while (1) {    // 자리수의 수를 뽑는다
         if ((num / deg) > 0)
             cnt++;
@@ -168,8 +176,31 @@ void itoa(int num, char* str) {
     *(str + i) = '\0';  // 문자열끝널..
 }
 
+void printCLCD(char str[]) {
+    initialize_textlcd();
+
+    int i, len;
+    len = strlen(str);
+
+    if (len >= 32) {
+        printCLCD("OVERFLOW");  //OVERFLOW 에러처리
+        delay(2000);
+        putCmd4(0x01); // 표시 클리어
+    }
+
+    else {
+        for (i = 0; i < len; i++) {
+            if (i == 16) {
+                putCmd4(0xC0);
+            }
+            putChar(str[i]);
+        }
+    }
+}
+
 
 void WhichBtn() {
+    int len;
     if (digitalRead(BT0) == 1) {
         append(calc, '0');
     }
@@ -201,44 +232,39 @@ void WhichBtn() {
         append(calc, '9');
     }
     else if (!digitalRead(PLUS) == 1) {
-        append(calc, '+');
+        len = strlen(calc);
+        if (calc[len - 1] == '+' || calc[len - 1] == '-') {
+            printCLCD("Invalid operation");  //Invalid operation 에러처리
+            delay(2000);
+            putCmd4(0x01); // 표시 클리어
+        }
+        else {
+            if (len != 0) {
+                append(calc, '+');
+            }
+        }
     }
     else if (!digitalRead(MINUS) == 1) {
-        append(calc, '-');
-    }
-}
-
-void printCLCD(char str[]) {
-    initialize_textlcd();
-
-    int i, len;
-    len = strlen(str);
-
-    if (len >= 32) {
-        printCLCD("OVERFLOW");
-    }
-
-    else {
-        for (i = 0; i < len; i++) {
-            if (i == 16) {
-                putCmd4(0xC0);
-            }
-            putChar(str[i]);
+        if (calc[len - 1] == '+' || calc[len - 1] == '-') {
+            printCLCD("Invalid operation");  //Invalid operation 에러처리
+            delay(2000);
+            putCmd4(0x01); // 표시 클리어
+        }
+        else {
+            append(calc, '-');
         }
     }
 }
 
+
 void calcCulator(char* dst) {
+
     int sum, i, len, param1, flag;
 
     char* c = dst;
 
     char s1[50] = "";
     char sumStr[50];
-
-    //char c[50] = "1+23-5+2+6-5+3-1+105";    //129
-    //char b[50] = "6+89+4-56-48";            //-5
-    //char c[50] = "-2+10+34-12+30";          //60
 
     len = strlen(c);
 
@@ -294,8 +320,7 @@ void calcCulator(char* dst) {
 }
 
 int main(int argc, char** argv) {
-
-    int i , len , state; 
+    int i, len, state;
 
     wiringPiSetup();
 
@@ -322,14 +347,14 @@ int main(int argc, char** argv) {
                 }
                 else if (len >= 32) {
                     printCLCD("OVERFLOW");          //OVERFLOW 에러처리
-                    delay(1000);
-                    break;
+                    delay(2000);
+                    putCmd4(0x01); // 표시 클리어
                 }
                 WhichBtn();
                 delay(10);
                 state = 1;
 
-                putChar(calc[len]);
+                printCLCD(calc);
             }
         }
         else if (digitalRead(BT0) == 0 &&
