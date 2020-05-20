@@ -116,7 +116,7 @@ void initialize_textlcd() {	//CLCD 초기화
 }
 
 char calc[100] = "";
-
+int isError = 0;
 
 void append(char* dst, char c) {
     char* p = dst;
@@ -149,7 +149,7 @@ int atoi(char* cdata) {
 
 void itoa(int num, char* str) {
     int i = 0;
-    int radix = 10;  // 진수
+    int radix = 10;  
     int deg = 1;
     int cnt = 0;
 
@@ -159,22 +159,22 @@ void itoa(int num, char* str) {
         num *= -1;
     }
 
-    while (1) {    // 자리수의 수를 뽑는다
+    while (1) {   
         if ((num / deg) > 0)
             cnt++;
         else
             break;
         deg *= radix;
     }
-    deg /= radix;    // deg가 기존 자리수보다 한자리 높게 카운트 되어서 한번 나누어줌 
-    // EX) 1241 ->    cnt = 4; deg = 1000;
-    for (i = 0; i < cnt; i++) {    // 자리수만큼 순회
-        *(str + i) = num / deg + '0';    // 가장 큰 자리수의 수부터 뽑음
-        num -= ((num / deg) * deg);        // 뽑은 자리수의 수를 없엠
-        deg /= radix;    // 자리수 줄임
+    deg /= radix;   
+    for (i = 0; i < cnt; i++) {    
+        *(str + i) = num / deg + '0';    
+        num -= ((num / deg) * deg);        
+        deg /= radix;    
     }
-    *(str + i) = '\0';  // 문자열끝널..
+    *(str + i) = '\0';  
 }
+
 
 void printCLCD(char str[]) {
     initialize_textlcd();
@@ -182,10 +182,10 @@ void printCLCD(char str[]) {
     int i, len;
     len = strlen(str);
 
-    if (len >= 32) {
+    if (len > 32) {
         printCLCD("OVERFLOW");  //OVERFLOW 에러처리
+        isError = 1;
         delay(2000);
-        putCmd4(0x01); // 표시 클리어
     }
 
     else {
@@ -235,8 +235,8 @@ void WhichBtn() {
         len = strlen(calc);
         if (calc[len - 1] == '+' || calc[len - 1] == '-') {
             printCLCD("Invalid operation");  //Invalid operation 에러처리
+            isError = 1;
             delay(2000);
-            putCmd4(0x01); // 표시 클리어
         }
         else {
             if (len != 0) {
@@ -245,10 +245,11 @@ void WhichBtn() {
         }
     }
     else if (!digitalRead(MINUS) == 1) {
+        len = strlen(calc);
         if (calc[len - 1] == '+' || calc[len - 1] == '-') {
             printCLCD("Invalid operation");  //Invalid operation 에러처리
+            isError = 1;
             delay(2000);
-            putCmd4(0x01); // 표시 클리어
         }
         else {
             append(calc, '-');
@@ -315,8 +316,6 @@ void calcCulator(char* dst) {
         c += 1;
     }
     *(c + 1) = '\0';
-
-    printf("%s\n", c);
 }
 
 int main(int argc, char** argv) {
@@ -345,12 +344,8 @@ int main(int argc, char** argv) {
                 if (len == 16) {
                     putCmd4(0xC0);
                 }
-                else if (len >= 32) {
-                    printCLCD("OVERFLOW");          //OVERFLOW 에러처리
-                    delay(2000);
-                    putCmd4(0x01); // 표시 클리어
-                }
                 WhichBtn();
+
                 delay(10);
                 state = 1;
 
@@ -377,8 +372,22 @@ int main(int argc, char** argv) {
         if (digitalRead(EQL)) {
             break;
         }
+        if (isError) {
+            goto end;
+        }
     }
-    calcCulator(calc);
+    int testCode = strlen(calc);
+    if (testCode >= 1) {
+        calcCulator(calc);
 
-    printCLCD(calc);
+        printCLCD(calc);
+        if (isError) {
+            goto end;
+        }
+    }
+
+    return 0;
+
+    end:
+        initialize_textlcd();
 }
