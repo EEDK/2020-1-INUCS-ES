@@ -260,7 +260,7 @@ void WhichBtn() {
 
 void calcCulator(char* dst) {
 
-    int sum, i, len, param1, flag;
+    int sum, i, len, param1, flag , isCalc;
 
     char* c = dst;
 
@@ -271,6 +271,7 @@ void calcCulator(char* dst) {
 
     sum = 0;
     flag = 0;       // 처음 항인가?
+
 
     for (i = 0; i < len; i++) {
         if (i == 0 && c[i] == '-') {
