@@ -146,7 +146,6 @@ int atoi(char* cdata) {
     return data * sign;
 }
 
-
 void itoa(int num, char* str) {
     int i = 0;
     int radix = 10;  
@@ -175,7 +174,6 @@ void itoa(int num, char* str) {
     *(str + i) = '\0';  
 }
 
-
 void printCLCD(char str[]) {
     initialize_textlcd();
 
@@ -197,7 +195,6 @@ void printCLCD(char str[]) {
         }
     }
 }
-
 
 void WhichBtn() {
     int len;
@@ -256,7 +253,6 @@ void WhichBtn() {
         }
     }
 }
-
 
 void calcCulator(char* dst) {
 

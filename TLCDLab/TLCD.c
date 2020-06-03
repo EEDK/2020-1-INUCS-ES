@@ -1,10 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h> /* for exit */
-#include <unistd.h> /* for open/close .. */
-#include <fcntl.h> /* for O_RDONLY */
-#include <sys/ioctl.h> /* for ioctl */
-#include <sys/types.h>
-#include <linux/fb.h> /* for fb_var_screeninfo, FBIOGET_VSCREENINFO */
+#include <string.h>
 #include <wiringPi.h>
 
 #define FBDEVFILE "/dev/fb2"
@@ -19,16 +14,47 @@
 #define BTN2	6	// #103
 #define BTN3	11	// #118
 
+
 #define BTNDEL	1
 #define BTNLft	4
 #define BTNRgt	5
 
-void initialize_textlcd();
 
+void initialize_textlcd() {
+    pinMode(BTN7, INPUT);
+    pinMode(BTN8, INPUT);
+    pinMode(BTN9, INPUT);
+    pinMode(BTN4, INPUT);
+    pinMode(BTN5, INPUT);
+    pinMode(BTN6, INPUT);
+    pinMode(BTN1, INPUT);
+    pinMode(BTN2, INPUT);
+    pinMode(BTN3, INPUT);
+    pinMode(BTNDEL, INPUT);
+    pinMode(BTNLft, INPUT);
+    pinMode(BTNRgt, INPUT);
+ 
+    pullUpDnControl(BTN7, PUD_DOWN);
+    pullUpDnControl(BTN8, PUD_DOWN);
+    pullUpDnControl(BTN9, PUD_DOWN);
+    pullUpDnControl(BTN4, PUD_DOWN);
+    pullUpDnControl(BTN5, PUD_DOWN);
+    pullUpDnControl(BTN6, PUD_DOWN);
+    pullUpDnControl(BTN1, PUD_DOWN);
+    pullUpDnControl(BTN2, PUD_DOWN);
+    pullUpDnControl(BTN3, PUD_DOWN);
+    pullUpDnControl(BTNDEL, PUD_UP);
+    pullUpDnControl(BTNLft, PUD_UP);
+    pullUpDnControl(BTNRgt, PUD_UP);
+
+    delay(2);
+}
 int main()
 {
+    wiringPiSetup();
+
     initialize_textlcd();
-    state = 0;
+    int state = 0;
 
     for (;;) {
         if (digitalRead(BTN1) ||
@@ -44,7 +70,7 @@ int main()
             !digitalRead(BTNLft) ||
             !digitalRead(BTNRgt)) {
             if (state == 0) {
-                Printf("i'm clicked!\n");
+                printf("i'm clicked!\n");
                 delay(10);
                 state = 1;
             }
@@ -62,7 +88,7 @@ int main()
             !digitalRead(BTNLft) == 0 &&
             !digitalRead(BTNRgt) == 0) {
             if (state == 1) {
-                Printf("reset state\n");
+                printf("reset state\n");
                 delay(10);
                 state = 0;
             }
@@ -72,30 +98,3 @@ int main()
 	return 0;
 }
 
-void initialize_textlcd() {
-    pinMode(BTN7, INPUT);
-    pinMode(BTN8, INPUT);
-    pinMode(BTN9, INPUT);
-    pinMode(BTN4, INPUT);
-    pinMode(BTN5, INPUT);
-    pinMode(BTN6, INPUT);
-    pinMode(BTN1, INPUT);
-    pinMode(BTN2, INPUT);
-    pinMode(BTN3, INPUT);
-    pinMode(BTNDEL, INPUT);
-    pinMode(BTNLft, INPUT);
-    pinMode(BTNRgt, INPUT);
-
-    pullUpDnControl(BTN7, PUD_DOWN);
-    pullUpDnControl(BTN8, PUD_DOWN);
-    pullUpDnControl(BTN9, PUD_DOWN);
-    pullUpDnControl(BTN4, PUD_DOWN);
-    pullUpDnControl(BTN5, PUD_DOWN);
-    pullUpDnControl(BTN6, PUD_DOWN);
-    pullUpDnControl(BTN1, PUD_DOWN);
-    pullUpDnControl(BTN2, PUD_DOWN);
-    pullUpDnControl(BTN3, PUD_DOWN);
-    pullUpDnControl(BTNDEL, PUD_UP);
-    pullUpDnControl(BTNLft, PUD_UP);
-    pullUpDnControl(BTNRgt, PUD_UP);
-}
