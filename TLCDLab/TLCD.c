@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <wiringPi.h>
+#include <stdlib.h> /* for exit */
+#include <unistd.h> /* for open/close .. */
+#include <fcntl.h> /* for O_RDONLY */
+#include <sys/ioctl.h> /* for ioctl */
+#include <sys/types.h>
+#include <linux/fb.h> /* for fb_var_screeninfo, FBIOGET_VSCREENINFO */
 
 #define FBDEVFILE "/dev/fb2"
 
@@ -24,7 +30,8 @@ struct font {
     char name;
 };
 
-static struct font font_list[28];
+static struct font font_list[29];
+static char outputStr[80] = "";
 
 void copy(int array1[24][24], int array2[24][24])
 void setUpFontAtoG();
@@ -32,20 +39,36 @@ void setUpFontHtoN();
 void setUpFontOtoU();
 void setUpFontVtoZ();
 void setUpForETC();
+void setUpFont();
 void initialize_textlcd();
 
 int main()
 {
-    setUpFontAtoG();
-    setUpFontHtoN();
-    setUpFontOtoU();
-    setUpFontVtoZ();
-    setUpForETC();
+    int fbfd , state , ret;
+    struct fb_var_screeninfo fbvar;
+
+    int inputBtn[12] = { 0 };
+    fbfd = open(FBDEVFILE, O_RDWR);
+    if (fbfd < 0)
+    {
+        perror("fbdev open");
+        exit(1);
+    }
+    ret = ioctl(fbfd, FBIOGET_VSCREENINFO, &fbvar);
+    if (ret < 0)
+    {
+        perror("fbdev ioctl");
+        exit(1);
+    }
+    if (fbvar.bits_per_pixel != 16)
+    {
+        fprintf(stderr, "bpp is not 16\n");
+        exit(1);
+    }
 
     wiringPiSetup();
-
+    setUpFont();
     initialize_textlcd();
-    int state = 0;
 
     for (;;) {
         if (digitalRead(BTN1) ||
@@ -61,7 +84,43 @@ int main()
             !digitalRead(BTNLft) ||
             !digitalRead(BTNRgt)) {
             if (state == 0) {
-                printf("i'm clicked!\n");
+                if (digitalRead(BTN1) == 1) {
+                    inputBtn[0] += 1;
+                }
+                else if (digitalRead(BTN2) == 1) {
+                    inputBtn[1] += 1;
+                }
+                else if (digitalRead(BTN3) == 1) {
+                    inputBtn[2] += 1;
+                }
+                else if (digitalRead(BTN4) == 1) {
+                    inputBtn[3] += 1;
+                }
+                else if (digitalRead(BTN5) == 1) {
+                    inputBtn[4] += 1;
+                }
+                else if (digitalRead(BTN6) == 1) {
+                    inputBtn[5] += 1;
+                }
+                else if (digitalRead(BTN7) == 1) {
+                    inputBtn[6] += 1;
+                }
+                else if (digitalRead(BTN8) == 1) {
+                    inputBtn[7] += 1;
+                }
+                else if (digitalRead(BTN9) == 1) {
+                    inputBtn[8] += 1;
+                }
+                else if (!digitalRead(BTNDEL) == 1) {
+                    inputBtn[9] += 1;
+                }
+                else if (!digitalRead(BTNLft) == 1) {
+                    inputBtn[10] += 1;
+                }
+                else if (!digitalRead(BTNRgt) == 1) {
+                    inputBtn[11] += 1;
+                }
+                printf("%s\n" , outputStr);
                 delay(10);
                 state = 1;
             }
@@ -79,7 +138,6 @@ int main()
             !digitalRead(BTNLft) == 0 &&
             !digitalRead(BTNRgt) == 0) {
             if (state == 1) {
-                printf("reset state\n");
                 delay(10);
                 state = 0;
             }
@@ -133,7 +191,6 @@ void copy(int array1[24][24], int array2[24][24])
         p1++; p2++;
     }
 }
-
 
 void setUpFontAtoG()
 {
@@ -965,5 +1022,42 @@ void setUpForETC() {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     };
     copy(dotPit, font_list[27].dot);
+
+    font_list[28].name = ' ';
+
+    int dotBNK[24][24] = {
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    };
+    copy(dotBNK, font_list[28].dot);
 }
 
+void setUpFont() {
+    setUpFontAtoG();
+    setUpFontHtoN();
+    setUpFontOtoU();
+    setUpFontVtoZ();
+    setUpForETC();
+}
