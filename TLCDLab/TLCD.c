@@ -1,12 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <wiringPi.h>
-#include <stdlib.h>    /* for exit */
-#include <unistd.h>    /* for open/close .. */
-#include <fcntl.h>     /* for O_RDONLY */
-#include <sys/ioctl.h> /* for ioctl */
-#include <sys/types.h>
-#include <linux/fb.h> /* for fb_var_screeninfo, FBIOGET_VSCREENINFO */
+
 
 #define FBDEVFILE "/dev/fb2"
 
@@ -30,10 +25,11 @@ struct font
     char name;
 };
 
-static struct font font_list[29];
+struct font font_list[29];
 char outputStr[80] = "";
 
-void copy(int array1[24][24], int array2[24][24]) void setUpFontAtoG();
+void copy(int array1[24][24], int array2[24][24]);
+void setUpFontAtoG();
 void setUpFontHtoN();
 void setUpFontOtoU();
 void setUpFontVtoZ();
@@ -46,32 +42,14 @@ void Delete(int index);
 int main()
 {
     int fbfd, state, ret, pos, length, i;
-    struct fb_var_screeninfo fbvar;
 
     int inputBtn[9] = {0};
-
-    fbfd = open(FBDEVFILE, O_RDWR);
-    if (fbfd < 0)
-    {
-        perror("fbdev open");
-        exit(1);
-    }
-    ret = ioctl(fbfd, FBIOGET_VSCREENINFO, &fbvar);
-    if (ret < 0)
-    {
-        perror("fbdev ioctl");
-        exit(1);
-    }
-    if (fbvar.bits_per_pixel != 16)
-    {
-        fprintf(stderr, "bpp is not 16\n");
-        exit(1);
-    }
 
     wiringPiSetup();
     setUpFont();
     initialize_textlcd();
     pos = 0;
+    state = 0;
 
     for (;;)
     {
@@ -92,18 +70,15 @@ int main()
             {
                 length = strlen(outputStr);
 
-                // blank
                 char insertChar = font_list[28].name;
 
                 if (digitalRead(BTN1) == 1)
                 {
-                    // ������ �κ� ���¸���
-
                     for (i = 0; i < 10; i++)
                     {
                         if (i != 0)
                         {
-                            inputBtn[i] = 0
+                            inputBtn[i] = 0;
                         }
                     }
 
@@ -136,7 +111,7 @@ int main()
                     {
                         if (i != 1)
                         {
-                            inputBtn[i] = 0
+                            inputBtn[i] = 0;
                         }
                     }
 
@@ -169,7 +144,7 @@ int main()
                     {
                         if (i != 2)
                         {
-                            inputBtn[i] = 0
+                            inputBtn[i] = 0;
                         }
                     }
 
@@ -202,7 +177,7 @@ int main()
                     {
                         if (i != 3)
                         {
-                            inputBtn[i] = 0
+                            inputBtn[i] = 0;
                         }
                     }
 
@@ -235,7 +210,7 @@ int main()
                     {
                         if (i != 4)
                         {
-                            inputBtn[i] = 0
+                            inputBtn[i] = 0;
                         }
                     }
 
@@ -268,7 +243,7 @@ int main()
                     {
                         if (i != 5)
                         {
-                            inputBtn[i] = 0
+                            inputBtn[i] = 0;
                         }
                     }
 
@@ -301,7 +276,7 @@ int main()
                     {
                         if (i != 6)
                         {
-                            inputBtn[i] = 0
+                            inputBtn[i] = 0;
                         }
                     }
 
@@ -316,13 +291,16 @@ int main()
                     {
                     case 1:
                         // insert dot
-                        insertChar = font_list[26].name break;
+                        insertChar = font_list[26].name;
+                        break;
                     case 2:
                         // insert q
-                        insertChar = font_list[16].name break;
+                        insertChar = font_list[16].name;
+                        break;
                     default:
                         // insert z
-                        insertChar = font_list[25].name break;
+                        insertChar = font_list[25].name;
+                        break;
                     }
                 }
                 else if (digitalRead(BTN8) == 1)
@@ -331,7 +309,7 @@ int main()
                     {
                         if (i != 7)
                         {
-                            inputBtn[i] = 0
+                            inputBtn[i] = 0;
                         }
                     }
 
@@ -350,10 +328,12 @@ int main()
                         break;
                     case 2:
                         // insert b
-                        insertChar = font_list[1].name break;
+                        insertChar = font_list[1].name; 
+                        break;
                     default:
                         // insert c
-                        insertChar = font_list[2].name break;
+                        insertChar = font_list[2].name;
+                        break;
                     }
                 }
                 else if (digitalRead(BTN9) == 1)
@@ -362,7 +342,7 @@ int main()
                     {
                         if (i != 8)
                         {
-                            inputBtn[i] = 0
+                            inputBtn[i] = 0;
                         }
                     }
 
@@ -397,7 +377,6 @@ int main()
                 {
                     if (pos > 0)
                     {
-                        // ���� ������ value�� ������ �����ϰ� ������ �׳� pos�� �������� 1ĭ�̵�
                         if (insertChar != font_list[28].name)
                         {
                             Insert(pos, insertChar);
@@ -414,7 +393,7 @@ int main()
                     }
                 }
 
-                printf("%s\n", outputStr);
+                //printf("%s\n", outputStr);
                 delay(10);
                 state = 1;
             }
@@ -519,7 +498,6 @@ void setUpFontAtoG()
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     };
-
     copy(dotA, font_list[0].dot);
 
     font_list[1].name = 'b';
