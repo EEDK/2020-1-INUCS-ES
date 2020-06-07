@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h> /* for exit */
 #include <wiringPi.h>
+#include <unistd.h> /* for open/close .. */
+#include <fcntl.h> /* for O_RDONLY */
+#include <sys/ioctl.h> /* for ioctl */
+#include <sys/types.h>
+#include <linux/fb.h> /* for fb_var_screeninfo, FBIOGET_VSCREENINFO */
 
 
 #define FBDEVFILE "/dev/fb2"
@@ -18,6 +24,14 @@
 #define BTNDEL 1 // #87
 #define BTNLft 4 // #104
 #define BTNRgt 5 // #102
+
+typedef unsigned char ubyte;
+
+//색 정보를 16bit로 변환해 주는 함수
+unsigned short makepixel(ubyte r, ubyte g, ubyte b)
+{
+    return (unsigned short)(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
+}
 
 struct font
 {
@@ -39,20 +53,25 @@ void initialize_textlcd();
 void Insert(int idx, char ch);
 void Delete(int idx);
 void Append(char ch);
-
+void PrintTLCD();
+void initTLCD();
 
 
 int main()
 {
-    int fbfd, state, ret, pos, length, i , flag;
+    int state, pos, length, i , flag;
 
-    int inputBtn[9] = {0};
+    unsigned short blackPixel = makepixel(255, 255, 255);
 
+    int inputBtn[9] = { 0 };
     char insertChar;
+
 
     wiringPiSetup();
     setUpFont();
     initialize_textlcd();
+    initTLCD();
+
     pos = 0;
     state = 0;
 
@@ -409,7 +428,16 @@ int main()
                     }
                 }
 
-                printf("%s\n", outputStr);
+                // nomal btn
+                if (flag == 1) {
+                    Insert(pos, insertChar);
+                    printf("%s\n", outputStr);
+                    Delete(pos);
+                }
+                // speicial btn
+                else if (flag == 0) { 
+                    printf("%s\n", outputStr); 
+                }
                 delay(10);
                 state = 1;
             }
@@ -468,7 +496,6 @@ void initialize_textlcd()
 
     delay(2);
 }
-
 /* set structList */
 void copy(int array1[24][24], int array2[24][24])
 {
@@ -1350,18 +1377,103 @@ void setUpFont()
     setUpFontVtoZ();
     setUpForETC();
 }
-
 void Insert(int idx, char ch) { 
     memmove(outputStr + idx + 1, outputStr + idx, strlen(outputStr) - idx + 1); 
     outputStr[idx] = ch; 
 }
-
-
 void Delete(int idx) { 
     memmove(outputStr + idx, outputStr + idx + 1, strlen(outputStr) - idx); 
 }
-
 void Append(char ch) { 
     Insert(strlen(outputStr), ch); 
 }
 
+//TLCD convet White
+void initTLCD() {
+    int fbfd;
+    int ret;
+    struct fb_var_screeninfo fbvar;
+
+    unsigned short blackPixel = makepixel(0, 0, 0);
+    unsigned short whitePixel = makepixel(255, 255, 255);
+
+
+    fbfd = open(FBDEVFILE, O_RDWR);
+    if (fbfd < 0)
+    {
+        perror("fbdev open");
+        exit(1);
+    }
+    ret = ioctl(fbfd, FBIOGET_VSCREENINFO, &fbvar);
+    if (ret < 0)
+    {
+        perror("fbdev ioctl");
+        exit(1);
+    }
+    if (fbvar.bits_per_pixel != 16)
+    {
+        fprintf(stderr, "bpp is not 16\n");
+        exit(1);
+    }
+    int xpos1, ypos1;
+    int xpos2, ypos2;
+    int offset;
+    int t, tt;
+    /* random number between 0 and xres-1 */
+    xpos1 = 0;
+    xpos2 = fbvar.xres - 1;
+
+    /* random number between 0 and yres */
+    ypos1 = 0;
+    ypos2 = fbvar.yres - 1;
+
+
+    for (t = ypos1; t <= ypos2; t++)
+    {
+        offset = t * fbvar.xres * (16 / 8) + xpos1 * (16 / 8);
+
+        if (lseek(fbfd, offset, SEEK_SET) < 0)
+        {
+            perror("fbdev lseek");
+            exit(1);
+        }
+        for (tt = xpos1; tt <= xpos2; tt++)
+            write(fbfd, &whitePixel, 2);
+    }
+}
+
+void PrintTLCD() {
+    int fbfd;
+    int ret;
+    struct fb_var_screeninfo fbvar;
+    unsigned short pixel;
+    int offset;//frame buffer driver file point를 얻는다.
+    fbfd = open(FBDEVFILE, O_RDWR);
+    if (fbfd < 0) { perror("fbdevopen"); exit(1); }
+    // 커널로부터 LCD에 관한 정보를 fbvar에 저장한다. 
+    ret = ioctl(fbfd, FBIOGET_VSCREENINFO, &fbvar);
+    if (ret < 0) {
+        perror("fbdevioctl");
+        exit(1);
+    }
+    if (fbvar.bits_per_pixel != 16) { //bpp가 16bit인지 check
+        perror(" bpp is not 16\n ");
+        exit(1);
+    }
+
+
+    int length = strlen(outputStr);
+    int i , j;
+
+    int xpos, ypos;
+    for (i = 0; i < length; i++) {
+        // insert a
+        for (j = 0; j < 29; j++) {
+            if (outputStr[i] == font_list[j].name) {
+                /*TODO PRINT TLCD font.list[j].dot*/
+
+            }
+        }
+     
+    }
+}
