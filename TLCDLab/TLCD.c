@@ -36,14 +36,19 @@ void setUpFontVtoZ();
 void setUpForETC();
 void setUpFont();
 void initialize_textlcd();
-void Insert(int index, char ch);
-void Delete(int index);
+void Insert(int idx, char ch);
+void Delete(int idx);
+void Append(char ch);
+
+
 
 int main()
 {
-    int fbfd, state, ret, pos, length, i;
+    int fbfd, state, ret, pos, length, i , flag;
 
     int inputBtn[9] = {0};
+
+    char insertChar;
 
     wiringPiSetup();
     setUpFont();
@@ -68,12 +73,13 @@ int main()
         {
             if (state == 0)
             {
-                length = strlen(outputStr);
-
-                char insertChar = font_list[28].name;
+                if (flag == 0) {
+                    insertChar = font_list[28].name;
+                }
 
                 if (digitalRead(BTN1) == 1)
                 {
+                    flag = 1;
                     for (i = 0; i < 10; i++)
                     {
                         if (i != 0)
@@ -106,7 +112,7 @@ int main()
                 }
                 else if (digitalRead(BTN2) == 1)
                 {
-
+                    flag = 1;
                     for (i = 0; i < 10; i++)
                     {
                         if (i != 1)
@@ -122,6 +128,7 @@ int main()
                     }
 
                     inputBtn[1] += 1;
+
                     switch (inputBtn[1] % 3)
                     {
                     case 1:
@@ -140,6 +147,7 @@ int main()
                 }
                 else if (digitalRead(BTN3) == 1)
                 {
+                    flag = 1;
                     for (i = 0; i < 10; i++)
                     {
                         if (i != 2)
@@ -173,6 +181,7 @@ int main()
                 }
                 else if (digitalRead(BTN4) == 1)
                 {
+                    flag = 1;
                     for (i = 0; i < 10; i++)
                     {
                         if (i != 3)
@@ -206,6 +215,7 @@ int main()
                 }
                 else if (digitalRead(BTN5) == 1)
                 {
+                    flag = 1;
                     for (i = 0; i < 10; i++)
                     {
                         if (i != 4)
@@ -239,6 +249,7 @@ int main()
                 }
                 else if (digitalRead(BTN6) == 1)
                 {
+                    flag = 1;
                     for (i = 0; i < 10; i++)
                     {
                         if (i != 5)
@@ -272,6 +283,7 @@ int main()
                 }
                 else if (digitalRead(BTN7) == 1)
                 {
+                    flag = 1;
                     for (i = 0; i < 10; i++)
                     {
                         if (i != 6)
@@ -305,6 +317,7 @@ int main()
                 }
                 else if (digitalRead(BTN8) == 1)
                 {
+                    flag = 1;
                     for (i = 0; i < 10; i++)
                     {
                         if (i != 7)
@@ -338,6 +351,7 @@ int main()
                 }
                 else if (digitalRead(BTN9) == 1)
                 {
+                    flag = 1;
                     for (i = 0; i < 10; i++)
                     {
                         if (i != 8)
@@ -369,12 +383,13 @@ int main()
 
                 else if (!digitalRead(BTNDEL) == 1)
                 {
-                    /* pos�� �ش�Ǵ� string�� delete�Ѵ�.*/
+                    flag = 0;
                     Delete(pos);
                 }
 
                 else if (!digitalRead(BTNLft) == 1)
                 {
+                    flag = 0;
                     if (pos > 0)
                     {
                         if (insertChar != font_list[28].name)
@@ -386,14 +401,15 @@ int main()
                 }
                 else if (!digitalRead(BTNRgt) == 1)
                 {
-                    if (pos < length && pos < 80)
+                    flag = 0;
+                    if (pos < 80)
                     {
                         Insert(pos, insertChar);
                         pos += 1;
                     }
                 }
 
-                //printf("%s\n", outputStr);
+                printf("%s\n", outputStr);
                 delay(10);
                 state = 1;
             }
@@ -1335,12 +1351,17 @@ void setUpFont()
     setUpForETC();
 }
 
-void Insert(int index, char ch)
-{
-    memmove(outputStr + index + 1, outputStr + index, strlen(outputStr) - index + 1);
+void Insert(int idx, char ch) { 
+    memmove(outputStr + idx + 1, outputStr + idx, strlen(outputStr) - idx + 1); 
+    outputStr[idx] = ch; 
 }
 
-void Delete(int index)
-{
-    memmove(outputStr + index, outputStr + index + 1, strlen(outputStr) - index);
+
+void Delete(int idx) { 
+    memmove(outputStr + idx, outputStr + idx + 1, strlen(outputStr) - idx); 
 }
+
+void Append(char ch) { 
+    Insert(strlen(outputStr), ch); 
+}
+
