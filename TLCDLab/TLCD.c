@@ -1472,17 +1472,19 @@ void PrintTLCD() {
     // function 
     int xpos1, ypos1;
     int xpos2, ypos2;
-    int offset , xoffset, yoffset;
+    int offset , xoffset, yoffset , flag;
 
     /* start xpos , ypos => 0 , 0 */
     xpos1 = 0;
-    xpos2 = (int)((fbvar.xres - 1) / 10);
-    xoffset = (int)((fbvar.xres - 1) / 10);
+    xpos2 = 24;
+
+    xoffset = 24;
 
     
     ypos1 = 0;
-    ypos2 = ((int)(fbvar.yres - 1) / 10);
-    yoffset = 8;
+    ypos2 = 24;
+
+    yoffset = 24;
 
 
     int length = strlen(outputStr);
@@ -1495,7 +1497,7 @@ void PrintTLCD() {
          * xpos1,2 -> += xoffset
          * if xpos2 -> xres-1 ypos1,2 += yoffset and xpos1 = 0 ,  xpos1 = xoffset
          */
-        if (count = 9) {
+        if (count == 9) {
             xpos1  = 0;
             xpos2  = xoffset;
 
@@ -1510,8 +1512,12 @@ void PrintTLCD() {
 
             count += 1;
         }
-        for (j = 0; j < 29; j++) {
-            if (outputStr[i] == font_list[j].name) {
+        for (j = 0; j < 29; j++) 
+        {
+            flag = 0;
+
+            if (outputStr[i] == font_list[j].name) 
+            {
                 /* TODO PRINT TLCD font.list[j].dot
                  * dot is 1 -> black , 0 -> white
                  */
@@ -1538,9 +1544,9 @@ void PrintTLCD() {
                             write(fbfd, &whitePixel, 2);
                         }
                     }
+                    flag = 1;
                 }
             }
         }
-     
     }
 }
