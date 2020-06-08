@@ -66,7 +66,6 @@ int main()
     int inputBtn[9] = { 0 };
     char insertChar;
 
-
     wiringPiSetup();
     setUpFont();
     initialize_textlcd();
@@ -432,13 +431,15 @@ int main()
                 if (flag == 1) {
                     Insert(pos, insertChar);
                     printf("%s\n", outputStr);
+                    PrintTLCD();
                     Delete(pos);
                 }
                 // speicial btn
                 else if (flag == 0) { 
                     printf("%s\n", outputStr); 
+                    PrintTLCD();
                 }
-                delay(10);
+                delay(20);
                 state = 1;
             }
         }
@@ -457,7 +458,7 @@ int main()
         {
             if (state == 1)
             {
-                delay(10);
+                delay(20);
                 state = 0;
             }
         }
@@ -812,24 +813,24 @@ void setUpFontHtoN()
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -1446,32 +1447,98 @@ void PrintTLCD() {
     int fbfd;
     int ret;
     struct fb_var_screeninfo fbvar;
-    unsigned short pixel;
-    int offset;//frame buffer driver file point를 얻는다.
+
+    unsigned short blackPixel = makepixel(0, 0, 0);
+    unsigned short whitePixel = makepixel(255, 255, 255);
+
     fbfd = open(FBDEVFILE, O_RDWR);
-    if (fbfd < 0) { perror("fbdevopen"); exit(1); }
-    // 커널로부터 LCD에 관한 정보를 fbvar에 저장한다. 
+    if (fbfd < 0)
+    {
+        perror("fbdev open");
+        exit(1);
+    }
     ret = ioctl(fbfd, FBIOGET_VSCREENINFO, &fbvar);
-    if (ret < 0) {
-        perror("fbdevioctl");
+    if (ret < 0)
+    {
+        perror("fbdev ioctl");
         exit(1);
     }
-    if (fbvar.bits_per_pixel != 16) { //bpp가 16bit인지 check
-        perror(" bpp is not 16\n ");
+    if (fbvar.bits_per_pixel != 16)
+    {
+        fprintf(stderr, "bpp is not 16\n");
         exit(1);
     }
+
+    // function 
+    int xpos1, ypos1;
+    int xpos2, ypos2;
+    int offset , xoffset, yoffset;
+
+    /* start xpos , ypos => 0 , 0 */
+    xpos1 = 0;
+    xpos2 = (int)((fbvar.xres - 1) / 10);
+    xoffset = (int)((fbvar.xres - 1) / 10);
+
+    
+    ypos1 = 0;
+    ypos2 = ((int)(fbvar.yres - 1) / 10);
+    yoffset = 8;
 
 
     int length = strlen(outputStr);
-    int i , j;
+    int i, j, t , tt , count;
 
-    int xpos, ypos;
+    // if count = 9 change line
+    count = 0;
     for (i = 0; i < length; i++) {
-        // insert a
+        /* TODO Change Offset
+         * xpos1,2 -> += xoffset
+         * if xpos2 -> xres-1 ypos1,2 += yoffset and xpos1 = 0 ,  xpos1 = xoffset
+         */
+        if (count = 9) {
+            xpos1  = 0;
+            xpos2  = xoffset;
+
+            ypos1 += yoffset;
+            ypos2 += yoffset;
+
+            count = 0;
+        }
+        else if(count != 9) {
+            xpos1 += xoffset;
+            xpos2 += xoffset;
+
+            count += 1;
+        }
         for (j = 0; j < 29; j++) {
             if (outputStr[i] == font_list[j].name) {
-                /*TODO PRINT TLCD font.list[j].dot*/
+                /* TODO PRINT TLCD font.list[j].dot
+                 * dot is 1 -> black , 0 -> white
+                 */
+                for (t = ypos1; t <= ypos2; t++)
+                {
+                    offset = t * fbvar.xres * (16 / 8) + xpos1 * (16 / 8);
 
+                    if (lseek(fbfd, offset, SEEK_SET) < 0)
+                    {
+                        perror("fbdev lseek");
+                        exit(1);
+                    }
+                    for (tt = xpos1; tt <= xpos2; tt++) {
+                        /*  if dot black 
+                         *  write(fbfd, &blackPixel, 2);
+                         *  if dot white
+                         *  write(fbfd, &whitePixel, 2);
+                         */
+
+                        if (font_list[j-1].dot[t][tt] == 1) {
+                            write(fbfd, &blackPixel, 2);
+                        }
+                        else {
+                            write(fbfd, &whitePixel, 2);
+                        }
+                    }
+                }
             }
         }
      
