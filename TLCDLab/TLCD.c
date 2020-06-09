@@ -1,39 +1,48 @@
 #include <stdio.h>
 #include <string.h>
-#include <wiringPi.h>
 #include <stdlib.h> /* for exit */
+#include <wiringPi.h>
 #include <unistd.h> /* for open/close .. */
 #include <fcntl.h> /* for O_RDONLY */
 #include <sys/ioctl.h> /* for ioctl */
 #include <sys/types.h>
 #include <linux/fb.h> /* for fb_var_screeninfo, FBIOGET_VSCREENINFO */
 
+
 #define FBDEVFILE "/dev/fb2"
 
-#define BTN7	24	// #97
-#define BTN8	23	// #108
-#define BTN9	27	// #98
-#define BTN4	22	// #100
-#define BTN5	21	// #101
-#define BTN6	26	// #99	
-#define BTN1	7	// #83
-#define BTN2	6	// #103
-#define BTN3	11	// #118
+#define BTN7 24 // #97
+#define BTN8 23 // #108
+#define BTN9 27 // #98
+#define BTN4 22 // #100
+#define BTN5 21 // #101
+#define BTN6 26 // #99
+#define BTN1 7  // #83
+#define BTN2 6  // #103
+#define BTN3 11 // #118
 
+#define BTNLft 1 // #88
+#define BTNDEL 4 // #104
+#define BTNRgt 5 // #102
 
-#define BTNDEL	1   // #87
-#define BTNLft	4   // #104
-#define BTNRgt	5   // #102
+typedef unsigned char ubyte;
 
-struct font {
+//색 정보를 16bit로 변환해 주는 함수
+unsigned short makepixel(ubyte r, ubyte g, ubyte b)
+{
+    return (unsigned short)(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
+}
+
+struct font
+{
     int dot[24][24];
     char name;
 };
 
-static struct font font_list[29];
-static char outputStr[80] = "";
+struct font font_list[29];
+char outputStr[80] = "";
 
-void copy(int array1[24][24], int array2[24][24])
+void copy(int array1[24][24], int array2[24][24]);
 void setUpFontAtoG();
 void setUpFontHtoN();
 void setUpFontOtoU();
@@ -41,123 +50,433 @@ void setUpFontVtoZ();
 void setUpForETC();
 void setUpFont();
 void initialize_textlcd();
+void Insert(int idx, char ch);
+void Delete(int idx);
+void Append(char ch);
+void PrintTLCD();
+void initTLCD();
+
 
 int main()
 {
-    int fbfd , state , ret;
-    struct fb_var_screeninfo fbvar;
+    int state, pos, length, i, flag;
 
-    int inputBtn[12] = { 0 };
-    fbfd = open(FBDEVFILE, O_RDWR);
-    if (fbfd < 0)
-    {
-        perror("fbdev open");
-        exit(1);
-    }
-    ret = ioctl(fbfd, FBIOGET_VSCREENINFO, &fbvar);
-    if (ret < 0)
-    {
-        perror("fbdev ioctl");
-        exit(1);
-    }
-    if (fbvar.bits_per_pixel != 16)
-    {
-        fprintf(stderr, "bpp is not 16\n");
-        exit(1);
-    }
+    int inputBtn[9] = { 0 };
+    char insertChar;
 
     wiringPiSetup();
     setUpFont();
     initialize_textlcd();
+    initTLCD();
 
-    for (;;) {
-        if (digitalRead(BTN1) ||
-            digitalRead(BTN2) ||
-            digitalRead(BTN3) ||
-            digitalRead(BTN4) ||
-            digitalRead(BTN5) ||
-            digitalRead(BTN6) ||
-            digitalRead(BTN7) ||
-            digitalRead(BTN8) ||
-            digitalRead(BTN9) ||
-            !digitalRead(BTNDEL) ||
-            !digitalRead(BTNLft) ||
-            !digitalRead(BTNRgt)) {
-            if (state == 0) {
-                if (digitalRead(BTN1) == 1) {
+    pos = 0;
+    state = 0;
+
+    for (;;)
+    {
+        if (digitalRead(BTN1) == 1 ||
+            digitalRead(BTN2) == 1 ||
+            digitalRead(BTN3) == 1 ||
+            digitalRead(BTN4) == 1 ||
+            digitalRead(BTN5) == 1 ||
+            digitalRead(BTN6) == 1 ||
+            digitalRead(BTN7) == 1 ||
+            digitalRead(BTN8) == 1 ||
+            digitalRead(BTN9) == 1 ||
+            digitalRead(BTNDEL) == 0 ||
+            digitalRead(BTNLft) == 0 ||
+            digitalRead(BTNRgt) == 0)
+        {
+            if (state == 0)
+            {
+                if (flag == 0) {
+                    insertChar = font_list[28].name;
+                }
+
+                if (digitalRead(BTN1) == 1)
+                {
+                    flag = 1;
+                    for (i = 0; i < 10; i++)
+                    {
+                        if (i != 0)
+                        {
+                            inputBtn[i] = 0;
+                        }
+                    }
+
+                    if (inputBtn[0] == 3)
+                    {
+                        // overflow avoidance
+                        inputBtn[0] = 0;
+                    }
                     inputBtn[0] += 1;
+                    switch (inputBtn[0] % 3)
+                    {
+                    case 1:
+                        // insert t
+                        insertChar = font_list[15].name;
+                        break;
+                    case 2:
+                        // insert u
+                        insertChar = font_list[17].name;
+                        break;
+                    default:
+                        // insert v
+                        insertChar = font_list[18].name;
+                        break;
+                    }
                 }
-                else if (digitalRead(BTN2) == 1) {
+                else if (digitalRead(BTN2) == 1)
+                {
+                    flag = 1;
+                    for (i = 0; i < 10; i++)
+                    {
+                        if (i != 1)
+                        {
+                            inputBtn[i] = 0;
+                        }
+                    }
+
+                    if (inputBtn[1] == 3)
+                    {
+                        // overflow avoidance
+                        inputBtn[1] = 0;
+                    }
+
                     inputBtn[1] += 1;
+
+                    switch (inputBtn[1] % 3)
+                    {
+                    case 1:
+                        // insert t
+                        insertChar = font_list[19].name;
+                        break;
+                    case 2:
+                        // insert u
+                        insertChar = font_list[20].name;
+                        break;
+                    default:
+                        // insert v
+                        insertChar = font_list[21].name;
+                        break;
+                    }
                 }
-                else if (digitalRead(BTN3) == 1) {
+                else if (digitalRead(BTN3) == 1)
+                {
+                    flag = 1;
+                    for (i = 0; i < 10; i++)
+                    {
+                        if (i != 2)
+                        {
+                            inputBtn[i] = 0;
+                        }
+                    }
+
+                    if (inputBtn[2] == 3)
+                    {
+                        // overflow avoidance
+                        inputBtn[2] = 0;
+                    }
+
                     inputBtn[2] += 1;
+                    switch (inputBtn[2] % 3)
+                    {
+                    case 1:
+                        // insert w
+                        insertChar = font_list[22].name;
+                        break;
+                    case 2:
+                        // insert x
+                        insertChar = font_list[23].name;
+                        break;
+                    default:
+                        // insert y
+                        insertChar = font_list[24].name;
+                        break;
+                    }
                 }
-                else if (digitalRead(BTN4) == 1) {
+                else if (digitalRead(BTN4) == 1)
+                {
+                    flag = 1;
+                    for (i = 0; i < 10; i++)
+                    {
+                        if (i != 3)
+                        {
+                            inputBtn[i] = 0;
+                        }
+                    }
+
+                    if (inputBtn[3] == 3)
+                    {
+                        // overflow avoidance
+                        inputBtn[3] = 0;
+                    }
+
                     inputBtn[3] += 1;
+                    switch (inputBtn[3] % 3)
+                    {
+                    case 1:
+                        // insert g
+                        insertChar = font_list[6].name;
+                        break;
+                    case 2:
+                        // insert h
+                        insertChar = font_list[7].name;
+                        break;
+                    default:
+                        // insert i
+                        insertChar = font_list[8].name;
+                        break;
+                    }
                 }
-                else if (digitalRead(BTN5) == 1) {
+                else if (digitalRead(BTN5) == 1)
+                {
+                    flag = 1;
+                    for (i = 0; i < 10; i++)
+                    {
+                        if (i != 4)
+                        {
+                            inputBtn[i] = 0;
+                        }
+                    }
+
+                    if (inputBtn[4] == 3)
+                    {
+                        // overflow avoidance
+                        inputBtn[4] = 0;
+                    }
+
                     inputBtn[4] += 1;
+                    switch (inputBtn[4] % 3)
+                    {
+                    case 1:
+                        // insert j
+                        insertChar = font_list[9].name;
+                        break;
+                    case 2:
+                        // insert k
+                        insertChar = font_list[10].name;
+                        break;
+                    default:
+                        // insert l
+                        insertChar = font_list[11].name;
+                        break;
+                    }
                 }
-                else if (digitalRead(BTN6) == 1) {
+                else if (digitalRead(BTN6) == 1)
+                {
+                    flag = 1;
+                    for (i = 0; i < 10; i++)
+                    {
+                        if (i != 5)
+                        {
+                            inputBtn[i] = 0;
+                        }
+                    }
+
+                    if (inputBtn[5] == 3)
+                    {
+                        // overflow avoidance
+                        inputBtn[5] = 0;
+                    }
+
                     inputBtn[5] += 1;
+                    switch (inputBtn[5] % 3)
+                    {
+                    case 1:
+                        // insert m
+                        insertChar = font_list[12].name;
+                        break;
+                    case 2:
+                        // insert n
+                        insertChar = font_list[13].name;
+                        break;
+                    default:
+                        // insert o
+                        insertChar = font_list[14].name;
+                        break;
+                    }
                 }
-                else if (digitalRead(BTN7) == 1) {
+                else if (digitalRead(BTN7) == 1)
+                {
+                    flag = 1;
+                    for (i = 0; i < 10; i++)
+                    {
+                        if (i != 6)
+                        {
+                            inputBtn[i] = 0;
+                        }
+                    }
+
+                    if (inputBtn[6] == 3)
+                    {
+                        // overflow avoidance
+                        inputBtn[6] = 0;
+                    }
+
                     inputBtn[6] += 1;
+                    switch (inputBtn[6] % 3)
+                    {
+                    case 1:
+                        // insert dot
+                        insertChar = font_list[26].name;
+                        break;
+                    case 2:
+                        // insert q
+                        insertChar = font_list[16].name;
+                        break;
+                    default:
+                        // insert z
+                        insertChar = font_list[25].name;
+                        break;
+                    }
                 }
-                else if (digitalRead(BTN8) == 1) {
+                else if (digitalRead(BTN8) == 1)
+                {
+                    flag = 1;
+                    for (i = 0; i < 10; i++)
+                    {
+                        if (i != 7)
+                        {
+                            inputBtn[i] = 0;
+                        }
+                    }
+
+                    if (inputBtn[7] == 3)
+                    {
+                        // overflow avoidance
+                        inputBtn[7] = 0;
+                    }
+
                     inputBtn[7] += 1;
+                    switch (inputBtn[7] % 3)
+                    {
+                    case 1:
+                        // insert a
+                        insertChar = font_list[0].name;
+                        break;
+                    case 2:
+                        // insert b
+                        insertChar = font_list[1].name; 
+                        break;
+                    default:
+                        // insert c
+                        insertChar = font_list[2].name;
+                        break;
+                    }
                 }
-                else if (digitalRead(BTN9) == 1) {
+                else if (digitalRead(BTN9) == 1)
+                {
+                    flag = 1;
+                    for (i = 0; i < 10; i++)
+                    {
+                        if (i != 8)
+                        {
+                            inputBtn[i] = 0;
+                        }
+                    }
+
+                    if (inputBtn[8] == 3)
+                    {
+                        // overflow avoidance
+                        inputBtn[8] = 0;
+                    }
+
                     inputBtn[8] += 1;
+                    switch (inputBtn[8] % 3)
+                    {
+                    case 1:
+                        insertChar = font_list[3].name;
+                        break;
+                    case 2:
+                        insertChar = font_list[4].name;
+                        break;
+                    default:
+                        insertChar = font_list[5].name;
+                        break;
+                    }
                 }
-                else if (!digitalRead(BTNDEL) == 1) {
-                    inputBtn[9] += 1;
+                else if (digitalRead(BTNDEL) == 0)
+                {
+                    flag = 0;
+                    Delete(pos);
+                    if (pos > 0) {
+                        pos -= 1;
+                    }
+                    initTLCD();
                 }
-                else if (!digitalRead(BTNLft) == 1) {
-                    inputBtn[10] += 1;
+                else if (digitalRead(BTNLft) == 0)
+                {
+                    flag = 0;
+                    if (pos > 0)
+                    {
+                        if (insertChar != font_list[28].name)
+                        {
+                            Insert(pos, insertChar);
+                        }
+                        pos -= 1;
+                    }
                 }
-                else if (!digitalRead(BTNRgt) == 1) {
-                    inputBtn[11] += 1;
+                else if (digitalRead(BTNRgt) == 0)
+                {
+                    flag = 0;
+                    if (pos < 80)
+                    {
+                        Insert(pos, insertChar);
+                        pos += 1;
+                    }
                 }
-                printf("%s\n" , outputStr);
-                delay(10);
+
+                // nomal btn
+                if (flag == 1) {
+                    Insert(pos, insertChar);
+                    printf("%s\n", outputStr);
+                    PrintTLCD();
+                    Delete(pos);
+                }
+                // speicial btn
+                else if (flag == 0) { 
+                    printf("special btn clicked\n"); 
+                    PrintTLCD();
+                }
                 state = 1;
+                delay(20);
             }
         }
         else if (digitalRead(BTN1) == 0 &&
-            digitalRead(BTN2) == 0 &&
-            digitalRead(BTN3) == 0 &&
-            digitalRead(BTN4) == 0 &&
-            digitalRead(BTN5) == 0 &&
-            digitalRead(BTN6) == 0 &&
-            digitalRead(BTN7) == 0 &&
-            digitalRead(BTN8) == 0 &&
-            digitalRead(BTN9) == 0 &&
-            !digitalRead(BTNDEL) == 0 &&
-            !digitalRead(BTNLft) == 0 &&
-            !digitalRead(BTNRgt) == 0) {
-            if (state == 1) {
-                delay(10);
-                state = 0;
+                 digitalRead(BTN2) == 0 &&
+                 digitalRead(BTN3) == 0 &&
+                 digitalRead(BTN4) == 0 &&
+                 digitalRead(BTN5) == 0 &&
+                 digitalRead(BTN6) == 0 &&
+                 digitalRead(BTN7) == 0 &&
+                 digitalRead(BTN8) == 0 &&
+                 digitalRead(BTN9) == 0 &&
+                 digitalRead(BTNDEL) == 1 &&
+                 digitalRead(BTNLft) == 1 &&
+                 digitalRead(BTNRgt) == 1){
+                 if (state == 1) {
+                     state = 0;
+                     delay(20);
             }
         }
     }
 
-	return 0;
+    return 0;
 }
 
-
-void initialize_textlcd() {
-    pinMode(BTN7, INPUT);
-    pinMode(BTN8, INPUT);
-    pinMode(BTN9, INPUT);
-    pinMode(BTN4, INPUT);
-    pinMode(BTN5, INPUT);
-    pinMode(BTN6, INPUT);
+void initialize_textlcd()
+{
     pinMode(BTN1, INPUT);
     pinMode(BTN2, INPUT);
     pinMode(BTN3, INPUT);
+    pinMode(BTN4, INPUT);
+    pinMode(BTN5, INPUT);
+    pinMode(BTN6, INPUT);
+    pinMode(BTN7, INPUT);
+    pinMode(BTN8, INPUT);
+    pinMode(BTN9, INPUT);
+
     pinMode(BTNDEL, INPUT);
     pinMode(BTNLft, INPUT);
     pinMode(BTNRgt, INPUT);
@@ -171,24 +490,26 @@ void initialize_textlcd() {
     pullUpDnControl(BTN1, PUD_DOWN);
     pullUpDnControl(BTN2, PUD_DOWN);
     pullUpDnControl(BTN3, PUD_DOWN);
+
     pullUpDnControl(BTNDEL, PUD_UP);
     pullUpDnControl(BTNLft, PUD_UP);
     pullUpDnControl(BTNRgt, PUD_UP);
 
     delay(2);
 }
-
+/* set structList */
 void copy(int array1[24][24], int array2[24][24])
 {
-    int* p1, * endp1;
-    int* p2;
+    int *p1, *endp1;
+    int *p2;
     p1 = &array1[0][0];
     p2 = &array2[0][0];
     endp1 = &array1[24 - 1][24 - 1];
     while (p1 <= endp1)
     {
         *p2 = *p1;
-        p1++; p2++;
+        p1++;
+        p2++;
     }
 }
 
@@ -221,7 +542,6 @@ void setUpFontAtoG()
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     };
-
     copy(dotA, font_list[0].dot);
 
     font_list[1].name = 'b';
@@ -399,7 +719,6 @@ void setUpFontAtoG()
 
     copy(dotG, font_list[6].dot);
 }
-
 void setUpFontHtoN()
 {
     font_list[7].name = 'h';
@@ -494,24 +813,24 @@ void setUpFontHtoN()
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -606,7 +925,6 @@ void setUpFontHtoN()
     };
     copy(dotN, font_list[13].dot);
 }
-
 void setUpFontOtoU()
 {
     font_list[14].name = 'o';
@@ -814,7 +1132,6 @@ void setUpFontOtoU()
     };
     copy(dotU, font_list[20].dot);
 }
-
 void setUpFontVtoZ()
 {
     font_list[21].name = 'v';
@@ -939,9 +1256,6 @@ void setUpFontVtoZ()
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0},
@@ -959,11 +1273,14 @@ void setUpFontVtoZ()
         {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     };
     copy(dotZ, font_list[25].dot);
 }
-
-void setUpForETC() {
+void setUpForETC()
+{
     font_list[26].name = '.';
     int dotDot[24][24] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -996,68 +1313,265 @@ void setUpForETC() {
     font_list[27].name = '_';
 
     int dotPit[24][24] = {
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     };
     copy(dotPit, font_list[27].dot);
 
     font_list[28].name = ' ';
 
     int dotBNK[24][24] = {
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     };
     copy(dotBNK, font_list[28].dot);
 }
-
-void setUpFont() {
+void setUpFont()
+{
     setUpFontAtoG();
     setUpFontHtoN();
     setUpFontOtoU();
     setUpFontVtoZ();
     setUpForETC();
+}
+
+void Insert(int idx, char ch) { 
+    memmove(outputStr + idx + 1, outputStr + idx, strlen(outputStr) - idx + 1); 
+    outputStr[idx] = ch; 
+}
+void Delete(int idx) { 
+    memmove(outputStr + idx, outputStr + idx + 1, strlen(outputStr) - idx); 
+}
+void Append(char ch) { 
+    Insert(strlen(outputStr), ch); 
+}
+
+//TLCD convert all White
+void initTLCD() {
+    int fbfd;
+    int ret;
+    struct fb_var_screeninfo fbvar;
+
+    unsigned short blackPixel = makepixel(0, 0, 0);
+    unsigned short whitePixel = makepixel(255, 255, 255);
+
+
+    fbfd = open(FBDEVFILE, O_RDWR);
+    if (fbfd < 0)
+    {
+        perror("fbdev open");
+        exit(1);
+    }
+    ret = ioctl(fbfd, FBIOGET_VSCREENINFO, &fbvar);
+    if (ret < 0)
+    {
+        perror("fbdev ioctl");
+        exit(1);
+    }
+    if (fbvar.bits_per_pixel != 16)
+    {
+        fprintf(stderr, "bpp is not 16\n");
+        exit(1);
+    }
+    int xpos1, ypos1;
+    int xpos2, ypos2;
+    int offset;
+    int t, tt;
+    /* random number between 0 and xres-1 */
+    xpos1 = 0;
+    xpos2 = fbvar.xres - 1;
+
+    /* random number between 0 and yres */
+    ypos1 = 0;
+    ypos2 = fbvar.yres - 1;
+
+
+    for (t = ypos1; t <= ypos2; t++)
+    {
+        offset = t * fbvar.xres * (16 / 8) + xpos1 * (16 / 8);
+
+        if (lseek(fbfd, offset, SEEK_SET) < 0)
+        {
+            perror("fbdev lseek");
+            exit(1);
+        }
+        for (tt = xpos1; tt <= xpos2; tt++)
+            write(fbfd, &whitePixel, 2);
+    }
+}
+
+void PrintTLCD() {
+    int fbfd;
+    int ret;
+    struct fb_var_screeninfo fbvar;
+
+    unsigned short blackPixel = makepixel(0, 0, 0);
+    unsigned short whitePixel = makepixel(255, 255, 255);
+
+    fbfd = open(FBDEVFILE, O_RDWR);
+    if (fbfd < 0)
+    {
+        perror("fbdev open");
+        exit(1);
+    }
+    ret = ioctl(fbfd, FBIOGET_VSCREENINFO, &fbvar);
+    if (ret < 0)
+    {
+        perror("fbdev ioctl");
+        exit(1);
+    }
+    if (fbvar.bits_per_pixel != 16)
+    {
+        fprintf(stderr, "bpp is not 16\n");
+        exit(1);
+    }
+
+    // function 
+    int xpos1, ypos1;
+    int xpos2, ypos2;
+    int offset , xoffset, yoffset;
+
+    /* start xpos , ypos => 0 , 0 */
+    xpos1 = 0;
+    xpos2 = 24;
+
+    xoffset = 28;
+    
+    ypos1 = 0;
+    ypos2 = 24;
+
+    yoffset = 32;
+
+    int length = strlen(outputStr);
+    int i, j, t , tt , count , x , y;
+
+    // if count = 9 change line
+    count = 0;
+    for (i = 0; i < length; i++) {
+        /* TODO Change Offset
+         * xpos1,2 -> += xoffset
+         * if xpos2 -> xres-1 ypos1,2 += yoffset and xpos1 = 0 ,  xpos1 = xoffset
+         */
+        if (count == 9) {
+            xpos1  = 0;
+            xpos2  = xoffset;
+
+            ypos1 += yoffset;
+            ypos2 += yoffset;
+
+            count = 0;
+        }
+        else if(count != 9) {
+            xpos1 += xoffset;
+            xpos2 += xoffset;
+
+            count += 1;
+        }
+        for (j = 0; j < 29; j++) 
+        {
+            if (outputStr[i] == font_list[j].name) 
+            {
+                /* TODO PRINT TLCD font.list[j].dot
+                 * dot is 1 -> black , 0 -> white
+                 */
+                y = 0;
+                for (t = ypos1; t < ypos2; t++)
+                {
+                    offset = t * fbvar.xres * (16 / 8) + xpos1 * (16 / 8);
+
+                    if (lseek(fbfd, offset, SEEK_SET) < 0)
+                    {
+                        perror("fbdev lseek");
+                        exit(1);
+                    }
+                    x = 0;
+                    for (tt = xpos1; tt < xpos2; tt++) {
+                        /*  if dot black 
+                         *  write(fbfd, &blackPixel, 2);
+                         *  if dot white
+                         *  write(fbfd, &whitePixel, 2);
+                         */
+
+                        if (font_list[j].dot[y][x] == 1) {
+                            write(fbfd, &blackPixel, 2);
+                        }
+                        else {
+                            write(fbfd, &whitePixel, 2);
+                        }
+                        x += 1;
+                    }
+                    y += 1;
+                }
+            }
+            else if (outputStr[i] == ' ')
+            {
+                /* TODO PRINT TLCD font.list[j].dot
+                 * dot is 1 -> black , 0 -> white
+                 */
+                for (t = ypos1; t < ypos2; t++)
+                {
+                    offset = t * fbvar.xres * (16 / 8) + xpos1 * (16 / 8);
+
+                    if (lseek(fbfd, offset, SEEK_SET) < 0)
+                    {
+                        perror("fbdev lseek");
+                        exit(1);
+                    }
+                    for (tt = xpos1; tt < xpos2; tt++) {
+                        /*  if dot black
+                         *  write(fbfd, &blackPixel, 2);
+                         *  if dot white
+                         *  write(fbfd, &whitePixel, 2);
+                         */
+                         write(fbfd, &whitePixel, 2);
+                    }
+                }
+                break;
+            }
+        }
+    }
 }
