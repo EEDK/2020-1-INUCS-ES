@@ -7,7 +7,7 @@
 #include <sys/ioctl.h> /* for ioctl */
 #include <sys/types.h>
 #include <linux/fb.h> /* for fb_var_screeninfo, FBIOGET_VSCREENINFO */
-
+#include <time.h> /* get time*/
 
 #define FBDEVFILE "/dev/fb2"
 
@@ -53,7 +53,7 @@ void initialize_textlcd();
 void Insert(int idx, char ch);
 void Delete(int idx);
 void Append(char ch);
-void PrintTLCD();
+void PrintTLCD(int pos);
 void initTLCD();
 
 
@@ -431,16 +431,17 @@ int main()
                 if (flag == 1) {
                     Insert(pos, insertChar);
                     printf("%s\n", outputStr);
-                    PrintTLCD();
+                    PrintTLCD(pos);
                     Delete(pos);
                 }
                 // speicial btn
                 else if (flag == 0) { 
+                    printf("del : %d lft : %d rgt %d\n", digitalRead(BTNDEL), digitalRead(BTNLft), digitalRead(BTNRgt));
                     printf("special btn clicked\n"); 
-                    PrintTLCD();
+                    PrintTLCD(pos);
                 }
                 state = 1;
-                delay(20);
+                delay(200);
             }
         }
         else if (digitalRead(BTN1) == 0 &&
@@ -456,8 +457,10 @@ int main()
                  digitalRead(BTNLft) == 1 &&
                  digitalRead(BTNRgt) == 1){
                  if (state == 1) {
+                     printf("del : %d lft : %d rgt %d\n", digitalRead(BTNDEL), digitalRead(BTNLft), digitalRead(BTNRgt));
+
                      state = 0;
-                     delay(20);
+                     delay(200);
             }
         }
     }
@@ -1444,7 +1447,8 @@ void initTLCD() {
     }
 }
 
-void PrintTLCD() {
+/* pos is cursor position */
+void PrintTLCD(int pos) {
     int fbfd;
     int ret;
     struct fb_var_screeninfo fbvar;
@@ -1491,6 +1495,8 @@ void PrintTLCD() {
 
     // if count = 9 change line
     count = 0;
+
+    // cursor point part
     for (i = 0; i < length; i++) {
         /* TODO Change Offset
          * xpos1,2 -> += xoffset
@@ -1511,6 +1517,7 @@ void PrintTLCD() {
 
             count += 1;
         }
+
         for (j = 0; j < 29; j++) 
         {
             if (outputStr[i] == font_list[j].name) 
@@ -1539,6 +1546,9 @@ void PrintTLCD() {
                         if (font_list[j].dot[y][x] == 1) {
                             write(fbfd, &blackPixel, 2);
                         }
+                        else if (i == pos && y == 22) {
+                            write(fbfd, &blackPixel, 2);
+                        }
                         else {
                             write(fbfd, &whitePixel, 2);
                         }
@@ -1552,6 +1562,7 @@ void PrintTLCD() {
                 /* TODO PRINT TLCD font.list[j].dot
                  * dot is 1 -> black , 0 -> white
                  */
+
                 for (t = ypos1; t < ypos2; t++)
                 {
                     offset = t * fbvar.xres * (16 / 8) + xpos1 * (16 / 8);
@@ -1567,8 +1578,15 @@ void PrintTLCD() {
                          *  if dot white
                          *  write(fbfd, &whitePixel, 2);
                          */
-                         write(fbfd, &whitePixel, 2);
+                         if (i == pos && y == 22) {
+                             write(fbfd, &blackPixel, 2);
+                         }
+                         else {
+                             write(fbfd, &whitePixel, 2);
+                         }
                     }
+                    y += 1;
+
                 }
                 break;
             }
