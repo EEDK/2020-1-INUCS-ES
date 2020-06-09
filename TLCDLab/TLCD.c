@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h> /* for exit */
 #include <wiringPi.h>
+#include <unistd.h> /* for open/close .. */
+#include <fcntl.h> /* for O_RDONLY */
+#include <sys/ioctl.h> /* for ioctl */
+#include <sys/types.h>
+#include <linux/fb.h> /* for fb_var_screeninfo, FBIOGET_VSCREENINFO */
 
 
 #define FBDEVFILE "/dev/fb2"
@@ -15,9 +21,17 @@
 #define BTN2 6  // #103
 #define BTN3 11 // #118
 
-#define BTNDEL 1 // #87
-#define BTNLft 4 // #104
+#define BTNLft 1 // #88
+#define BTNDEL 4 // #104
 #define BTNRgt 5 // #102
+
+typedef unsigned char ubyte;
+
+//색 정보를 16bit로 변환해 주는 함수
+unsigned short makepixel(ubyte r, ubyte g, ubyte b)
+{
+    return (unsigned short)(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
+}
 
 struct font
 {
@@ -39,20 +53,22 @@ void initialize_textlcd();
 void Insert(int idx, char ch);
 void Delete(int idx);
 void Append(char ch);
-
+void PrintTLCD();
+void initTLCD();
 
 
 int main()
 {
-    int fbfd, state, ret, pos, length, i , flag;
+    int state, pos, length, i, flag;
 
-    int inputBtn[9] = {0};
-
+    int inputBtn[9] = { 0 };
     char insertChar;
 
     wiringPiSetup();
     setUpFont();
     initialize_textlcd();
+    initTLCD();
+
     pos = 0;
     state = 0;
 
@@ -385,8 +401,11 @@ int main()
                 {
                     flag = 0;
                     Delete(pos);
+                    if (pos > 0) {
+                        pos -= 1;
+                    }
+                    initTLCD();
                 }
-
                 else if (!digitalRead(BTNLft) == 1)
                 {
                     flag = 0;
@@ -409,9 +428,20 @@ int main()
                     }
                 }
 
-                printf("%s\n", outputStr);
-                delay(10);
+                // nomal btn
+                if (flag == 1) {
+                    Insert(pos, insertChar);
+                    printf("%s\n", outputStr);
+                    PrintTLCD();
+                    Delete(pos);
+                }
+                // speicial btn
+                else if (flag == 0) { 
+                    printf("%s\n", outputStr); 
+                    PrintTLCD();
+                }
                 state = 1;
+                delay(20);
             }
         }
         else if (digitalRead(BTN1) == 0 &&
@@ -425,12 +455,10 @@ int main()
                  digitalRead(BTN9) == 0 &&
                  !digitalRead(BTNDEL) == 0 &&
                  !digitalRead(BTNLft) == 0 &&
-                 !digitalRead(BTNRgt) == 0)
-        {
-            if (state == 1)
-            {
-                delay(10);
-                state = 0;
+                 !digitalRead(BTNRgt) == 0){
+                 if (state == 1) {
+                     state = 0;
+                     delay(20);
             }
         }
     }
@@ -449,9 +477,12 @@ void initialize_textlcd()
     pinMode(BTN1, INPUT);
     pinMode(BTN2, INPUT);
     pinMode(BTN3, INPUT);
+
     pinMode(BTNDEL, INPUT);
     pinMode(BTNLft, INPUT);
     pinMode(BTNRgt, INPUT);
+
+    delay(2);
 
     pullUpDnControl(BTN7, PUD_DOWN);
     pullUpDnControl(BTN8, PUD_DOWN);
@@ -462,13 +493,13 @@ void initialize_textlcd()
     pullUpDnControl(BTN1, PUD_DOWN);
     pullUpDnControl(BTN2, PUD_DOWN);
     pullUpDnControl(BTN3, PUD_DOWN);
+
     pullUpDnControl(BTNDEL, PUD_UP);
     pullUpDnControl(BTNLft, PUD_UP);
     pullUpDnControl(BTNRgt, PUD_UP);
 
     delay(2);
 }
-
 /* set structList */
 void copy(int array1[24][24], int array2[24][24])
 {
@@ -785,24 +816,24 @@ void setUpFontHtoN()
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -1355,13 +1386,195 @@ void Insert(int idx, char ch) {
     memmove(outputStr + idx + 1, outputStr + idx, strlen(outputStr) - idx + 1); 
     outputStr[idx] = ch; 
 }
-
-
 void Delete(int idx) { 
     memmove(outputStr + idx, outputStr + idx + 1, strlen(outputStr) - idx); 
 }
-
 void Append(char ch) { 
     Insert(strlen(outputStr), ch); 
 }
 
+//TLCD convert all White
+void initTLCD() {
+    int fbfd;
+    int ret;
+    struct fb_var_screeninfo fbvar;
+
+    unsigned short blackPixel = makepixel(0, 0, 0);
+    unsigned short whitePixel = makepixel(255, 255, 255);
+
+
+    fbfd = open(FBDEVFILE, O_RDWR);
+    if (fbfd < 0)
+    {
+        perror("fbdev open");
+        exit(1);
+    }
+    ret = ioctl(fbfd, FBIOGET_VSCREENINFO, &fbvar);
+    if (ret < 0)
+    {
+        perror("fbdev ioctl");
+        exit(1);
+    }
+    if (fbvar.bits_per_pixel != 16)
+    {
+        fprintf(stderr, "bpp is not 16\n");
+        exit(1);
+    }
+    int xpos1, ypos1;
+    int xpos2, ypos2;
+    int offset;
+    int t, tt;
+    /* random number between 0 and xres-1 */
+    xpos1 = 0;
+    xpos2 = fbvar.xres - 1;
+
+    /* random number between 0 and yres */
+    ypos1 = 0;
+    ypos2 = fbvar.yres - 1;
+
+
+    for (t = ypos1; t <= ypos2; t++)
+    {
+        offset = t * fbvar.xres * (16 / 8) + xpos1 * (16 / 8);
+
+        if (lseek(fbfd, offset, SEEK_SET) < 0)
+        {
+            perror("fbdev lseek");
+            exit(1);
+        }
+        for (tt = xpos1; tt <= xpos2; tt++)
+            write(fbfd, &whitePixel, 2);
+    }
+}
+
+void PrintTLCD() {
+    int fbfd;
+    int ret;
+    struct fb_var_screeninfo fbvar;
+
+    unsigned short blackPixel = makepixel(0, 0, 0);
+    unsigned short whitePixel = makepixel(255, 255, 255);
+
+    fbfd = open(FBDEVFILE, O_RDWR);
+    if (fbfd < 0)
+    {
+        perror("fbdev open");
+        exit(1);
+    }
+    ret = ioctl(fbfd, FBIOGET_VSCREENINFO, &fbvar);
+    if (ret < 0)
+    {
+        perror("fbdev ioctl");
+        exit(1);
+    }
+    if (fbvar.bits_per_pixel != 16)
+    {
+        fprintf(stderr, "bpp is not 16\n");
+        exit(1);
+    }
+
+    // function 
+    int xpos1, ypos1;
+    int xpos2, ypos2;
+    int offset , xoffset, yoffset;
+
+    /* start xpos , ypos => 0 , 0 */
+    xpos1 = 0;
+    xpos2 = 24;
+
+    xoffset = 28;
+    
+    ypos1 = 0;
+    ypos2 = 24;
+
+    yoffset = 32;
+
+    int length = strlen(outputStr);
+    int i, j, t , tt , count , x , y;
+
+    // if count = 9 change line
+    count = 0;
+    for (i = 0; i < length; i++) {
+        /* TODO Change Offset
+         * xpos1,2 -> += xoffset
+         * if xpos2 -> xres-1 ypos1,2 += yoffset and xpos1 = 0 ,  xpos1 = xoffset
+         */
+        if (count == 9) {
+            xpos1  = 0;
+            xpos2  = xoffset;
+
+            ypos1 += yoffset;
+            ypos2 += yoffset;
+
+            count = 0;
+        }
+        else if(count != 9) {
+            xpos1 += xoffset;
+            xpos2 += xoffset;
+
+            count += 1;
+        }
+        for (j = 0; j < 29; j++) 
+        {
+            if (outputStr[i] == font_list[j].name) 
+            {
+                /* TODO PRINT TLCD font.list[j].dot
+                 * dot is 1 -> black , 0 -> white
+                 */
+                y = 0;
+                for (t = ypos1; t < ypos2; t++)
+                {
+                    offset = t * fbvar.xres * (16 / 8) + xpos1 * (16 / 8);
+
+                    if (lseek(fbfd, offset, SEEK_SET) < 0)
+                    {
+                        perror("fbdev lseek");
+                        exit(1);
+                    }
+                    x = 0;
+                    for (tt = xpos1; tt < xpos2; tt++) {
+                        /*  if dot black 
+                         *  write(fbfd, &blackPixel, 2);
+                         *  if dot white
+                         *  write(fbfd, &whitePixel, 2);
+                         */
+
+                        if (font_list[j].dot[y][x] == 1) {
+                            write(fbfd, &blackPixel, 2);
+                        }
+                        else {
+                            write(fbfd, &whitePixel, 2);
+                        }
+                        x += 1;
+                    }
+                    y += 1;
+                }
+            }
+            else if (outputStr[i] == ' ')
+            {
+                /* TODO PRINT TLCD font.list[j].dot
+                 * dot is 1 -> black , 0 -> white
+                 */
+                for (t = ypos1; t < ypos2; t++)
+                {
+                    offset = t * fbvar.xres * (16 / 8) + xpos1 * (16 / 8);
+
+                    if (lseek(fbfd, offset, SEEK_SET) < 0)
+                    {
+                        perror("fbdev lseek");
+                        exit(1);
+                    }
+                    for (tt = xpos1; tt < xpos2; tt++) {
+                        /*  if dot black
+                         *  write(fbfd, &blackPixel, 2);
+                         *  if dot white
+                         *  write(fbfd, &whitePixel, 2);
+                         */
+                         write(fbfd, &whitePixel, 2);
+                    }
+                }
+                break;
+            }
+        }
+    }
+}
