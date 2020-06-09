@@ -27,7 +27,7 @@
 
 typedef unsigned char ubyte;
 
-//»ö Á¤º¸¸¦ 16bit·Î º¯È¯ÇØ ÁÖ´Â ÇÔ¼ö
+//ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 16bitï¿½ï¿½ ï¿½ï¿½È¯ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½Ô¼ï¿½
 unsigned short makepixel(ubyte r, ubyte g, ubyte b)
 {
     return (unsigned short)(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
