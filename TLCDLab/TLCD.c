@@ -74,18 +74,18 @@ int main()
 
     for (;;)
     {
-        if (digitalRead(BTN1) ||
-            digitalRead(BTN2) ||
-            digitalRead(BTN3) ||
-            digitalRead(BTN4) ||
-            digitalRead(BTN5) ||
-            digitalRead(BTN6) ||
-            digitalRead(BTN7) ||
-            digitalRead(BTN8) ||
-            digitalRead(BTN9) ||
-            !digitalRead(BTNDEL) ||
-            !digitalRead(BTNLft) ||
-            !digitalRead(BTNRgt))
+        if (digitalRead(BTN1) == 1 ||
+            digitalRead(BTN2) == 1 ||
+            digitalRead(BTN3) == 1 ||
+            digitalRead(BTN4) == 1 ||
+            digitalRead(BTN5) == 1 ||
+            digitalRead(BTN6) == 1 ||
+            digitalRead(BTN7) == 1 ||
+            digitalRead(BTN8) == 1 ||
+            digitalRead(BTN9) == 1 ||
+            digitalRead(BTNDEL) == 0 ||
+            digitalRead(BTNLft) == 0 ||
+            digitalRead(BTNRgt) == 0)
         {
             if (state == 0)
             {
@@ -396,8 +396,7 @@ int main()
                         break;
                     }
                 }
-
-                else if (!digitalRead(BTNDEL) == 1)
+                else if (digitalRead(BTNDEL) == 0)
                 {
                     flag = 0;
                     Delete(pos);
@@ -406,7 +405,7 @@ int main()
                     }
                     initTLCD();
                 }
-                else if (!digitalRead(BTNLft) == 1)
+                else if (digitalRead(BTNLft) == 0)
                 {
                     flag = 0;
                     if (pos > 0)
@@ -418,7 +417,7 @@ int main()
                         pos -= 1;
                     }
                 }
-                else if (!digitalRead(BTNRgt) == 1)
+                else if (digitalRead(BTNRgt) == 0)
                 {
                     flag = 0;
                     if (pos < 80)
@@ -437,7 +436,7 @@ int main()
                 }
                 // speicial btn
                 else if (flag == 0) { 
-                    printf("%s\n", outputStr); 
+                    printf("special btn clicked\n"); 
                     PrintTLCD();
                 }
                 state = 1;
@@ -453,9 +452,9 @@ int main()
                  digitalRead(BTN7) == 0 &&
                  digitalRead(BTN8) == 0 &&
                  digitalRead(BTN9) == 0 &&
-                 !digitalRead(BTNDEL) == 0 &&
-                 !digitalRead(BTNLft) == 0 &&
-                 !digitalRead(BTNRgt) == 0){
+                 digitalRead(BTNDEL) == 1 &&
+                 digitalRead(BTNLft) == 1 &&
+                 digitalRead(BTNRgt) == 1){
                  if (state == 1) {
                      state = 0;
                      delay(20);
@@ -468,21 +467,19 @@ int main()
 
 void initialize_textlcd()
 {
-    pinMode(BTN7, INPUT);
-    pinMode(BTN8, INPUT);
-    pinMode(BTN9, INPUT);
-    pinMode(BTN4, INPUT);
-    pinMode(BTN5, INPUT);
-    pinMode(BTN6, INPUT);
     pinMode(BTN1, INPUT);
     pinMode(BTN2, INPUT);
     pinMode(BTN3, INPUT);
+    pinMode(BTN4, INPUT);
+    pinMode(BTN5, INPUT);
+    pinMode(BTN6, INPUT);
+    pinMode(BTN7, INPUT);
+    pinMode(BTN8, INPUT);
+    pinMode(BTN9, INPUT);
 
     pinMode(BTNDEL, INPUT);
     pinMode(BTNLft, INPUT);
     pinMode(BTNRgt, INPUT);
-
-    delay(2);
 
     pullUpDnControl(BTN7, PUD_DOWN);
     pullUpDnControl(BTN8, PUD_DOWN);
