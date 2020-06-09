@@ -21,8 +21,8 @@
 #define BTN2 6  // #103
 #define BTN3 11 // #118
 
-#define BTNDEL 1 // #87
-#define BTNLft 4 // #104
+#define BTNLft 1 // #88
+#define BTNDEL 4 // #104
 #define BTNRgt 5 // #102
 
 typedef unsigned char ubyte;
@@ -59,9 +59,7 @@ void initTLCD();
 
 int main()
 {
-    int state, pos, length, i , flag;
-
-    unsigned short blackPixel = makepixel(255, 255, 255);
+    int state, pos, length, i, flag;
 
     int inputBtn[9] = { 0 };
     char insertChar;
@@ -403,8 +401,11 @@ int main()
                 {
                     flag = 0;
                     Delete(pos);
+                    if (pos > 0) {
+                        pos -= 1;
+                    }
+                    initTLCD();
                 }
-
                 else if (!digitalRead(BTNLft) == 1)
                 {
                     flag = 0;
@@ -439,8 +440,8 @@ int main()
                     printf("%s\n", outputStr); 
                     PrintTLCD();
                 }
-                delay(20);
                 state = 1;
+                delay(20);
             }
         }
         else if (digitalRead(BTN1) == 0 &&
@@ -454,12 +455,10 @@ int main()
                  digitalRead(BTN9) == 0 &&
                  !digitalRead(BTNDEL) == 0 &&
                  !digitalRead(BTNLft) == 0 &&
-                 !digitalRead(BTNRgt) == 0)
-        {
-            if (state == 1)
-            {
-                delay(20);
-                state = 0;
+                 !digitalRead(BTNRgt) == 0){
+                 if (state == 1) {
+                     state = 0;
+                     delay(20);
             }
         }
     }
@@ -478,9 +477,12 @@ void initialize_textlcd()
     pinMode(BTN1, INPUT);
     pinMode(BTN2, INPUT);
     pinMode(BTN3, INPUT);
+
     pinMode(BTNDEL, INPUT);
     pinMode(BTNLft, INPUT);
     pinMode(BTNRgt, INPUT);
+
+    delay(2);
 
     pullUpDnControl(BTN7, PUD_DOWN);
     pullUpDnControl(BTN8, PUD_DOWN);
@@ -491,6 +493,7 @@ void initialize_textlcd()
     pullUpDnControl(BTN1, PUD_DOWN);
     pullUpDnControl(BTN2, PUD_DOWN);
     pullUpDnControl(BTN3, PUD_DOWN);
+
     pullUpDnControl(BTNDEL, PUD_UP);
     pullUpDnControl(BTNLft, PUD_UP);
     pullUpDnControl(BTNRgt, PUD_UP);
@@ -1378,6 +1381,7 @@ void setUpFont()
     setUpFontVtoZ();
     setUpForETC();
 }
+
 void Insert(int idx, char ch) { 
     memmove(outputStr + idx + 1, outputStr + idx, strlen(outputStr) - idx + 1); 
     outputStr[idx] = ch; 
@@ -1389,7 +1393,7 @@ void Append(char ch) {
     Insert(strlen(outputStr), ch); 
 }
 
-//TLCD convet White
+//TLCD convert all White
 void initTLCD() {
     int fbfd;
     int ret;
@@ -1472,23 +1476,21 @@ void PrintTLCD() {
     // function 
     int xpos1, ypos1;
     int xpos2, ypos2;
-    int offset , xoffset, yoffset , flag;
+    int offset , xoffset, yoffset;
 
     /* start xpos , ypos => 0 , 0 */
     xpos1 = 0;
     xpos2 = 24;
 
-    xoffset = 24;
-
+    xoffset = 28;
     
     ypos1 = 0;
     ypos2 = 24;
 
-    yoffset = 24;
-
+    yoffset = 32;
 
     int length = strlen(outputStr);
-    int i, j, t , tt , count;
+    int i, j, t , tt , count , x , y;
 
     // if count = 9 change line
     count = 0;
@@ -1514,14 +1516,13 @@ void PrintTLCD() {
         }
         for (j = 0; j < 29; j++) 
         {
-            flag = 0;
-
             if (outputStr[i] == font_list[j].name) 
             {
                 /* TODO PRINT TLCD font.list[j].dot
                  * dot is 1 -> black , 0 -> white
                  */
-                for (t = ypos1; t <= ypos2; t++)
+                y = 0;
+                for (t = ypos1; t < ypos2; t++)
                 {
                     offset = t * fbvar.xres * (16 / 8) + xpos1 * (16 / 8);
 
@@ -1530,22 +1531,49 @@ void PrintTLCD() {
                         perror("fbdev lseek");
                         exit(1);
                     }
-                    for (tt = xpos1; tt <= xpos2; tt++) {
+                    x = 0;
+                    for (tt = xpos1; tt < xpos2; tt++) {
                         /*  if dot black 
                          *  write(fbfd, &blackPixel, 2);
                          *  if dot white
                          *  write(fbfd, &whitePixel, 2);
                          */
 
-                        if (font_list[j-1].dot[t][tt] == 1) {
+                        if (font_list[j].dot[y][x] == 1) {
                             write(fbfd, &blackPixel, 2);
                         }
                         else {
                             write(fbfd, &whitePixel, 2);
                         }
+                        x += 1;
                     }
-                    flag = 1;
+                    y += 1;
                 }
+            }
+            else if (outputStr[i] == ' ')
+            {
+                /* TODO PRINT TLCD font.list[j].dot
+                 * dot is 1 -> black , 0 -> white
+                 */
+                for (t = ypos1; t < ypos2; t++)
+                {
+                    offset = t * fbvar.xres * (16 / 8) + xpos1 * (16 / 8);
+
+                    if (lseek(fbfd, offset, SEEK_SET) < 0)
+                    {
+                        perror("fbdev lseek");
+                        exit(1);
+                    }
+                    for (tt = xpos1; tt < xpos2; tt++) {
+                        /*  if dot black
+                         *  write(fbfd, &blackPixel, 2);
+                         *  if dot white
+                         *  write(fbfd, &whitePixel, 2);
+                         */
+                         write(fbfd, &whitePixel, 2);
+                    }
+                }
+                break;
             }
         }
     }
