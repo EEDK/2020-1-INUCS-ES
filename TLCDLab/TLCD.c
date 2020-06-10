@@ -71,6 +71,8 @@ int main()
 
     pos = 0;
     state = 0;
+    Insert(pos, font_list[28].name);
+    PrintTLCD(pos);
 
     for (;;)
     {
@@ -436,12 +438,10 @@ int main()
                 }
                 // speicial btn
                 else if (flag == 0) { 
-                    printf("del : %d lft : %d rgt %d\n", digitalRead(BTNDEL), digitalRead(BTNLft), digitalRead(BTNRgt));
-                    printf("special btn clicked\n"); 
                     PrintTLCD(pos);
                 }
                 state = 1;
-                delay(200);
+                delay(20);
             }
         }
         else if (digitalRead(BTN1) == 0 &&
@@ -457,10 +457,8 @@ int main()
                  digitalRead(BTNLft) == 1 &&
                  digitalRead(BTNRgt) == 1){
                  if (state == 1) {
-                     printf("del : %d lft : %d rgt %d\n", digitalRead(BTNDEL), digitalRead(BTNLft), digitalRead(BTNRgt));
-
                      state = 0;
-                     delay(200);
+                     delay(20);
             }
         }
     }
@@ -1302,7 +1300,7 @@ void setUpForETC()
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -1343,7 +1341,7 @@ void setUpForETC()
     };
     copy(dotPit, font_list[27].dot);
 
-    font_list[28].name = ' ';
+    font_list[28].name = '-';
 
     int dotBNK[24][24] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -1556,39 +1554,6 @@ void PrintTLCD(int pos) {
                     }
                     y += 1;
                 }
-            }
-            else if (outputStr[i] == ' ')
-            {
-                /* TODO PRINT TLCD font.list[j].dot
-                 * dot is 1 -> black , 0 -> white
-                 */
-
-                for (t = ypos1; t < ypos2; t++)
-                {
-                    offset = t * fbvar.xres * (16 / 8) + xpos1 * (16 / 8);
-
-                    if (lseek(fbfd, offset, SEEK_SET) < 0)
-                    {
-                        perror("fbdev lseek");
-                        exit(1);
-                    }
-                    for (tt = xpos1; tt < xpos2; tt++) {
-                        /*  if dot black
-                         *  write(fbfd, &blackPixel, 2);
-                         *  if dot white
-                         *  write(fbfd, &whitePixel, 2);
-                         */
-                         if (i == pos && y == 22) {
-                             write(fbfd, &blackPixel, 2);
-                         }
-                         else {
-                             write(fbfd, &whitePixel, 2);
-                         }
-                    }
-                    y += 1;
-
-                }
-                break;
             }
         }
     }
