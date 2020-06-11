@@ -1465,11 +1465,6 @@ void PrintTLCD(int pos) {
     int ret;
     struct fb_var_screeninfo fbvar;
 
-    char showStr[70] = "";
-    int i, length;
-
-    length = strlen(outputStr);
-
     unsigned short blackPixel = makepixel(0, 0, 0);
     unsigned short whitePixel = makepixel(255, 255, 255);
 
@@ -1494,7 +1489,9 @@ void PrintTLCD(int pos) {
     // function 
     int xpos1, ypos1;
     int xpos2, ypos2;
-    int offset , xoffset, yoffset;
+    int offset , xoffset, yoffset , length, change , i , ourpos;
+
+    length = strlen(outputStr);
 
     /* start xpos , ypos => 0 , 0 */
 
@@ -1508,12 +1505,12 @@ void PrintTLCD(int pos) {
     xoffset = 28;
     yoffset = 32;
 
-    length = strlen(outputStr);
     int j, t , tt , count , x , y;
 
     // if count = 9 change line
     count = 0;
-
+    change = 1;
+    ourpos = pos;
 
     // cursor point part 1 ~ 7 line
     for (i = 0; i < length; i++) 
@@ -1522,6 +1519,22 @@ void PrintTLCD(int pos) {
          * xpos1,2 -> += xoffset
          * if xpos2 -> xres-1 ypos1,2 += yoffset and xpos1 = 0 ,  xpos1 = xoffset
          */
+        if (length >= 70 && pos >= 40) {
+            if (change == 1) {
+                change = change * -1;
+                initTLCD();
+            }
+
+            if (i < 10) {
+                continue;
+            }
+        }
+        else {
+            if (change == -1) {
+                change = change * -1;
+                initTLCD();
+            }
+        }
 
         if (count == 9) {
             xpos1  = 4;
@@ -1532,16 +1545,20 @@ void PrintTLCD(int pos) {
 
             count = 0;
         }
-        else if((count != 9 || xpos1 > fbvar.xres - 1 || xpos2 > fbvar.xres - 1) && i != 0) {
+        else if( count != 9 ) {
+            if ((change == 1 && i == 0) || (change == -1 && i == 10)) {
+                goto out;
+            }
             xpos1 += xoffset;
             xpos2 += xoffset;
 
             count += 1;
         }
+    out:
 
         for (j = 0; j < 29; j++) 
         {
-            if (outputStr[i] == font_list[j].name) 
+            if (outputStr[i] == font_list[j].name)
             {
                 /* TODO PRINT TLCD font.list[j].dot
                  * dot is 1 -> black , 0 -> white
@@ -1567,7 +1584,7 @@ void PrintTLCD(int pos) {
                         if (font_list[j].dot[y][x] == 1) {
                             write(fbfd, &blackPixel, 2);
                         }
-                        else if (i == pos && y == 20) {
+                        else if (i == ourpos && y == 20) {
                             write(fbfd, &blackPixel, 2);
                         }
                         else {
