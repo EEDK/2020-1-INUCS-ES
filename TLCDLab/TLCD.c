@@ -433,15 +433,40 @@ int main()
                         }
                         pos += 1;
                     }
+
+                    if (pos == 80) {
+                        pos -= 1;
+                    }
                 }
 
                 // nomal btn
                 if (flag == 1) {
+                    int errHandle = 0;
+
                     if ((outputStr[pos + 1] <= 120 && outputStr[pos + 1] >= 97) && (outputStr[pos - 1] <= 120 && outputStr[pos - 1] >= 97) && isInsert == 1) {
                         pos += 1;
                         isInsert = 0;
                     }
+
+                    else if ( (isInsert == 1) && (outputStr[pos - 1] <= 120 && outputStr[pos - 1] >= 97) && (pos == length - 1)) {
+                        errHandle = 1;
+                        isInsert = 0;
+                    }
+
+                    if ((outputStr[pos + 1] <= 120 && outputStr[pos + 1] >= 97) && (outputStr[pos - 1] == '-') && isInsert == 1) {
+                        pos += 1;
+                        isInsert = 0;
+                    }
+
                     Insert(pos, insertChar);
+                    if (errHandle == 1) {
+
+                        char temp = outputStr[pos];
+                        outputStr[pos] = outputStr[pos + 1];
+                        outputStr[pos + 1] = temp;
+
+                        pos += 1;
+                    }
                     //printf("%s\n", outputStr);
                     PrintTLCD(pos);
                     Delete(pos);
@@ -943,6 +968,7 @@ void setUpFontHtoN()
 
     };
     copy(dotN, font_list[13].dot);
+
 }
 void setUpFontOtoU()
 {
@@ -1542,6 +1568,10 @@ void PrintTLCD(int pos) {
             if (change == -1) {
                 change = change * -1;
                 initTLCD();
+            }
+
+            if (i >= 70) {
+                continue;
             }
         }
 
