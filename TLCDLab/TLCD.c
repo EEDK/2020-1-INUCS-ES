@@ -72,7 +72,7 @@ int main()
     pos = 0;
     state = 0;
     outputStr[0] = '-';
-    isInsert = 1;
+    isInsert = 0;
 
     PrintTLCD(pos);
 
@@ -441,33 +441,14 @@ int main()
 
                 // nomal btn
                 if (flag == 1) {
-                    int errHandle = 0;
-
-                    if ((outputStr[pos + 1] <= 120 && outputStr[pos + 1] >= 97) && (outputStr[pos - 1] <= 120 && outputStr[pos - 1] >= 97) && isInsert == 1) {
+                    /*if (outputStr[pos] == '-' && pos < length) {
+                        Delete(pos);
+                    }*/
+                    if ((outputStr[pos + 1] >= 'a' && outputStr[pos + 1] <= 'z') && (outputStr[pos - 1] >= 'a' && outputStr[pos - 1] <= 'z') && pos < length && (isInsert == 0)) {
                         pos += 1;
-                        isInsert = 0;
+                        isInsert = 1;
                     }
-
-                    else if ( (isInsert == 1) && (outputStr[pos - 1] <= 120 && outputStr[pos - 1] >= 97) && (pos == length - 1)) {
-                        errHandle = 1;
-                        isInsert = 0;
-                    }
-
-                    if ((outputStr[pos + 1] <= 120 && outputStr[pos + 1] >= 97) && (outputStr[pos - 1] == '-') && isInsert == 1) {
-                        pos += 1;
-                        isInsert = 0;
-                    }
-
                     Insert(pos, insertChar);
-                    if (errHandle == 1) {
-
-                        char temp = outputStr[pos];
-                        outputStr[pos] = outputStr[pos + 1];
-                        outputStr[pos + 1] = temp;
-
-                        pos += 1;
-                    }
-                    //printf("%s\n", outputStr);
                     PrintTLCD(pos);
                     Delete(pos);
                 }
@@ -478,7 +459,7 @@ int main()
                     {
                         inputBtn[i] = 0;
                     }
-                    isInsert = 1;
+                    isInsert = 0;
                     PrintTLCD(pos);
                 }
                 state = 1;
