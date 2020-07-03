@@ -11,3 +11,12 @@ CLCD Lab 2. 65 error : int로 선언되어 2^32 - 1 을 넘어가는 숫자를 �
 TFT Lab 3. 100 -> 우선 동작은 확인됬으나. 폰트들 header파일로 분리 및 코드 리펙토링 작업 필요 ( 스파게티 코드급 )
 
 Final Lab 4. https://github.com/WhiteHyun/DrawingBoard-Project 95 fill기능 미흡으로 5점감점
+
+
+현장 실습 이후 (07/24) 리팩토링예정
+
+Lab2의 경우 실습장비가 없어 정확한 테스트가 불가능합니다. 제가 생각하는 errorFix를 정리해두는 선에서 처리하겠습니다.
+
+Lab3 에 대한 리팩토링 ( Font들을 Header File로 분리하고 중복되는 코드부분 메소드화 )
+
+La4b의 경우 규모가 너무 방대하고 설계과정에서의 문제때문에 Fill을 완벽히 구현할순 없을것같습니다
